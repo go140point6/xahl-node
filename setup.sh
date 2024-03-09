@@ -68,7 +68,32 @@ FUNC_CLONE_NODE_SETUP(){
     sudo ./xahaud-install-update.sh
     sleep 2s
     echo -e "${YELLOW}Updating conf file to limit public RPC/WS to localhost ...${NC}"
-    sudo sed -i -E '/^\[port_(ws|rpc)_public\]$/,/^\[/ {/^(ip = )0\.0\.0\.0/s/^(ip = )0\.0\.0\.0/\1127.0.0.1/}' /opt/xahaud/etc/xahaud.cfg
+    sudo sed -i -E '/^\[port_ws_public\]$/,/^\[/ {/^(ip = )0\.0\.0\.0/s/^(ip = )0\.0\.0\.0/\1127.0.0.1/}' /opt/xahaud/etc/xahaud.cfg
+    sleep 2s
+    
+    if grep -qE "^\[port_ws_public\]$" "/opt/xahaud/etc/xahaud.cfg" && grep -q "ip = 0.0.0.0" "/opt/xahaud/etc/xahaud.cfg"; then
+        sudo sed -i -E '/^\[port_ws_public\]$/,/^\[/ {/^(ip = )0\.0\.0\.0/s/^(ip = )0\.0\.0\.0/\1127.0.0.1/}' /opt/xahaud/etc/xahaud.cfg
+        if grep -qE "^\[port_ws_public\]$" "/opt/xahaud/etc/xahaud.cfg" && grep -q "ip = 0.0.0.0" "/opt/xahaud/etc/xahaud.cfg"; then
+            echo -e "${RED}Something wrong with updating [port_ws_public] ip in /opt/xahaud/etc/xahaud.cfg. YOU MUST DO MANUALLY!"
+        fi
+        echo -e "${GREEN}It appears that [port_ws_public] was able to update correctly after a 2nd attempt."
+    else
+        echo -e "${GREEN}It appears that [port_ws_public] was able to update correctly on the 1st attempt."
+    fi
+    
+    sudo sed -i -E '/^\[port_rpc_public\]$/,/^\[/ {/^(ip = )0\.0\.0\.0/s/^(ip = )0\.0\.0\.0/\1127.0.0.1/}' /opt/xahaud/etc/xahaud.cfg
+    sleep 2s
+    
+    if grep -qE "^\[port_rpc_public\]$" "/opt/xahaud/etc/xahaud.cfg" && grep -q "ip = 0.0.0.0" "/opt/xahaud/etc/xahaud.cfg"; then
+        sudo sed -i -E '/^\[port_rpc_public\]$/,/^\[/ {/^(ip = )0\.0\.0\.0/s/^(ip = )0\.0\.0\.0/\1127.0.0.1/}' /opt/xahaud/etc/xahaud.cfg
+        if grep -qE "^\[port_rpc_public\]$" "/opt/xahaud/etc/xahaud.cfg" && grep -q "ip = 0.0.0.0" "/opt/xahaud/etc/xahaud.cfg"; then
+            echo -e "${RED}Something wrong with updating [port_rpc_public] ip in /opt/xahaud/etc/xahaud.cfg. YOU MUST DO MANUALLY!"
+        fi
+        echo -e "${GREEN}It appears that [port_rpc_public] was able to update correctly after a 2nd attempt."
+    else
+        echo -e "${GREEN}It appears that [port_rpc_public] was able to update correctly on the 1st attempt."
+    fi
+
     sleep 2s
     sudo systemctl restart xahaud.service
     sleep 2s
