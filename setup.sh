@@ -72,26 +72,45 @@ FUNC_CLONE_NODE_SETUP(){
     sleep 2s
     
     if grep -qE "^\[port_ws_public\]$" "/opt/xahaud/etc/xahaud.cfg" && grep -q "ip = 0.0.0.0" "/opt/xahaud/etc/xahaud.cfg"; then
-        sudo sed -i -E '/^\[port_ws_public\]$/,/^\[/ {/^(ip = )0\.0\.0\.0/s/^(ip = )0\.0\.0\.0/\1127.0.0.1/}' /opt/xahaud/etc/xahaud.cfg
-        if grep -qE "^\[port_ws_public\]$" "/opt/xahaud/etc/xahaud.cfg" && grep -q "ip = 0.0.0.0" "/opt/xahaud/etc/xahaud.cfg"; then
-            echo -e "${RED}Something wrong with updating [port_ws_public] ip in /opt/xahaud/etc/xahaud.cfg. YOU MUST DO MANUALLY!"
+        sudo sed -i -E '/^\[port_ws_public\]$/,/^\[/ s/^(ip = )0\.0\.0\.0/\1127.0.0.1/' /opt/xahaud/etc/xahaud.cfg
+        sleep 2
+        if grep -q "ip = 127.0.0.1" "/opt/xahaud/etc/xahaud.cfg"; then
+            echo -e "${GREEN}It appears that [port_ws_public] was able to update correctly."
+        else
+            echo -e "${RED}Something wrong with updating [port_ws_public] ip in /opt/xahaud/etc/xahaud.cfg. Attempting second time..."
+            sudo sed -i -E '/^\[port_ws_public\]$/,/^\[/ s/^(ip = )0\.0\.0\.0/\1127.0.0.1/' /opt/xahaud/etc/xahaud.cfg
+            sleep 2
+            if grep -q "ip = 127.0.0.1" "/opt/xahaud/etc/xahaud.cfg"; then
+                echo -e "${GREEN}It appears that [port_ws_public] was able to update correctly on the second attempt."
+            else
+                echo -e "${RED}Something wrong with updating [port_ws_public] ip in /opt/xahaud/etc/xahaud.cfg. YOU MUST DO MANUALLY!"
+            fi
         fi
-        echo -e "${GREEN}It appears that [port_ws_public] was able to update correctly after a 2nd attempt."
     else
-        echo -e "${GREEN}It appears that [port_ws_public] was able to update correctly on the 1st attempt."
+        echo -e "${RED}Something wrong with updating [port_ws_public] ip in /opt/xahaud/etc/xahaud.cfg. YOU MUST DO MANUALLY!"
     fi
+
     
     sudo sed -i -E '/^\[port_rpc_public\]$/,/^\[/ {/^(ip = )0\.0\.0\.0/s/^(ip = )0\.0\.0\.0/\1127.0.0.1/}' /opt/xahaud/etc/xahaud.cfg
     sleep 2s
     
     if grep -qE "^\[port_rpc_public\]$" "/opt/xahaud/etc/xahaud.cfg" && grep -q "ip = 0.0.0.0" "/opt/xahaud/etc/xahaud.cfg"; then
-        sudo sed -i -E '/^\[port_rpc_public\]$/,/^\[/ {/^(ip = )0\.0\.0\.0/s/^(ip = )0\.0\.0\.0/\1127.0.0.1/}' /opt/xahaud/etc/xahaud.cfg
-        if grep -qE "^\[port_rpc_public\]$" "/opt/xahaud/etc/xahaud.cfg" && grep -q "ip = 0.0.0.0" "/opt/xahaud/etc/xahaud.cfg"; then
-            echo -e "${RED}Something wrong with updating [port_rpc_public] ip in /opt/xahaud/etc/xahaud.cfg. YOU MUST DO MANUALLY!"
+        sudo sed -i -E '/^\[port_rpc_public\]$/,/^\[/ s/^(ip = )0\.0\.0\.0/\1127.0.0.1/' /opt/xahaud/etc/xahaud.cfg
+        sleep 2
+        if grep -q "ip = 127.0.0.1" "/opt/xahaud/etc/xahaud.cfg"; then
+            echo -e "${GREEN}It appears that [port_rpc_public] was able to update correctly."
+        else
+            echo -e "${RED}Something wrong with updating [port_rpc_public] ip in /opt/xahaud/etc/xahaud.cfg. Attempting second time..."
+            sudo sed -i -E '/^\[port_rpc_public\]$/,/^\[/ s/^(ip = )0\.0\.0\.0/\1127.0.0.1/' /opt/xahaud/etc/xahaud.cfg
+            sleep 2
+            if grep -q "ip = 127.0.0.1" "/opt/xahaud/etc/xahaud.cfg"; then
+                echo -e "${GREEN}It appears that [port_rpc_public] was able to update correctly on the second attempt."
+            else
+                echo -e "${RED}Something wrong with updating [port_rpc_public] ip in /opt/xahaud/etc/xahaud.cfg. YOU MUST DO MANUALLY!"
+            fi
         fi
-        echo -e "${GREEN}It appears that [port_rpc_public] was able to update correctly after a 2nd attempt."
     else
-        echo -e "${GREEN}It appears that [port_rpc_public] was able to update correctly on the 1st attempt."
+        echo -e "${RED}Something wrong with updating [port_rpc_public] ip in /opt/xahaud/etc/xahaud.cfg. YOU MUST DO MANUALLY!"
     fi
 
     sleep 2s
