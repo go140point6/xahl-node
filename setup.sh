@@ -340,11 +340,11 @@ FUNC_NODE_DEPLOY(){
     #Xahau Node setup
     FUNC_CLONE_NODE_SETUP;
 
-    FUNC_CERTBOT;
-
     # Firewall config
     FUNC_SETUP_UFW_PORTS;
     FUNC_ENABLE_UFW;
+
+    FUNC_CERTBOT;
 
     #Rotate logs on regular basis
     FUNC_LOGROTATE;
