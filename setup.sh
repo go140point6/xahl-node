@@ -174,9 +174,13 @@ FUNC_CERTBOT(){
 
     # Prompt for user domains if not provided as a variable
     if [ -z "$USER_DOMAINS" ]; then
-        read -p "Enter a comma-separated list of domains, A record followed by CNAME records for RPC & WSS (e.g., server.mydomain.com,rpc.mydomain.com,wss.mydomain.com): " USER_DOMAINS
+        read -p "Enter your servers domain (e.g., xahaunode.mydomain.com): " USER_DOMAINS
     fi
 
+    # Prompt for user aloowed IP if not provided as a variable
+    if [ -z "$ALLOW_LIST" ]; then
+        read -p "Enter a comma-separated list of IPs, that will allow acces to your xahau node (for example 142.250.187.195,172.67.174.115): " ALLOW_LIST
+    fi
 
     # Prompt for user email if not provided as a variable
     if [ -z "$CERT_EMAIL" ]; then
@@ -187,8 +191,6 @@ FUNC_CERTBOT(){
 
     IFS=',' read -ra DOMAINS_ARRAY <<< "$USER_DOMAINS"
     A_RECORD="${DOMAINS_ARRAY[0]}"
-    CNAME_RECORD1="${DOMAINS_ARRAY[1]}"
-    CNAME_RECORD2="${DOMAINS_ARRAY[2]}" 
 
     # Start Nginx and enable it to start at boot
     sudo systemctl start nginx
@@ -369,13 +371,13 @@ FUNC_NODE_DEPLOY(){
     sudo cat <<EOF > $NGX_CONF_NEW
 server {
     listen 80;
-    server_name $A_RECORD $CNAME_RECORD1 $CNAME_RECORD2;
+    server_name $A_RECORD;
     return 301 https://\$host\$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name $CNAME_RECORD1;
+    server_name $A_RECORD;
 
     # SSL certificate paths
     ssl_certificate /etc/letsencrypt/live/$A_RECORD/fullchain.pem;
@@ -394,69 +396,36 @@ server {
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
 
+    # import vars file values
+    include ~/xahl-node/xahl_node.vars;
+
     location / {
         try_files $uri $uri/ =404;
         allow $SRC_IP;  # Allow the source IP of the SSH session
         allow $NODE_IP;  # Allow the source IP of the Node itself (for validation testing)
+        allow \$ALLOW_LIST; # Allow list array
         deny all;
+
+        # These three are critical to getting websockets to work
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        if ($http_upgrade = "websocket") {
+                add_header  X-Upstream  $upstream_addr;
+                proxy_set_header Host \$host;
+                proxy_set_header X-Real-IP \$remote_addr;
+                proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto \$scheme;
+                proxy_cache off;
+                proxy_buffering off;
+                proxy_pass  http://localhost:$VARVAL_CHAIN_WSS;
+        }
+
         proxy_pass http://localhost:$VARVAL_CHAIN_RPC;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
-    }
-
-    # Additional server configurations
-
-    # Set Content Security Policy (CSP) header
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline';";
-
-    # Enable XSS protection
-    add_header X-Content-Type-Options nosniff;
-    add_header X-Frame-Options "SAMEORIGIN";
-    add_header X-XSS-Protection "1; mode=block";
-
-}
-
-
-server {
-    listen 443 ssl http2;
-    server_name $CNAME_RECORD2;
-
-    # SSL certificate paths
-    ssl_certificate /etc/letsencrypt/live/$A_RECORD/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/$A_RECORD/privkey.pem;
-
-    # Other SSL settings
-    ssl_protocols TLSv1.3 TLSv1.2;
-    ssl_ciphers 'TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:ECDHE-RSA-AES256-GCM-SHA384';
-    ssl_prefer_server_ciphers off;
-    ssl_session_timeout 1d;
-    ssl_session_cache shared:SSL:10m;
-    ssl_session_tickets off;
-
-    # Additional SSL settings, including HSTS
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-Content-Type-Options "nosniff" always;
-
-    location / {
-        try_files $uri $uri/ =404;
-        allow $SRC_IP;  # Allow the source IP of the SSH session
-        allow $NODE_IP;  # Allow the source IP of the Node itself (for validation testing)
-        deny all;
-        proxy_pass http://localhost:$VARVAL_CHAIN_WSS;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_cache off;
-        proxy_buffering off;
-
-        # These three are critical to getting websockets to work
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection "upgrade";
     }
 
     # Additional server configurations

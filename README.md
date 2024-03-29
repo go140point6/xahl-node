@@ -59,7 +59,8 @@ To download the script(s) to your local node & install, read over the following 
 
 The vars file allows you to manually update the following variables which help to avoid interactive prompts during the install;
 
-- `USER_DOMAINS` - note the order in which the A & CNAME records must be entered.
+- `USER_DOMAINS` - your servers domain.
+- `ALLOW_LIST` - Enter a comma-separated list of IPs, that will be allowed acces to your xahau node.
 - `CERT_EMAIL` - email address for certificate renewals etc.
 
 The file also controls some of the packages that are installed on the node. More features will be added over time.
@@ -98,33 +99,20 @@ __tbc__
 
 #### Permitted Access - manual
 
-In order to add/remove source IPv4 addresses from the permit list within the nginx config, you simply access the file with your preferred editor e.g. vim or nano etc.  Each of the server blocks must be updated to reflect your desired access control policy. Pay attention
-to what server block you are in, there are two! The first is for RPC access, the second is for Websocket access.
+In order to add/remove source IPv4 addresses from the permit list within the nginx config,
+you simply access the xahl_nodes.vars file with your preferred editor e.g. vim or nano etc.
+and modify the ALLOW_LIST variabble, and Enter a comma-separated list of IPs
 
 Open the file with the 'nano' editor;
-`sudo nano /etc/nginx/sites-available/xahau`
+`sudo nano ~/xahl-node/xahl_node.vars`
 
-Move the cursor to the server blocks, similar to the following. NOTE! These IP addresses are EXAMPLES! You need YOUR IP addresses here;
+and edit the `ALLOW_LIST=""` line, for example `ALLOW_LIST="142.250.187.195,172.67.174.115"`
 
-    location / {
-        try_files  / =404;
-        allow 123.45.67.89;     # evr-node01
-        allow 98.76.54.32;      # evr-node02
-        allow 111.111.111.111;  # evr-node03
-        allow 88.88.88.88;      # some-other-server
-        allow 55.44.33.222;     # Allow the source IP of the node itself (for validation testing)
-        deny all;
+__ADD__ : Simply add a new IP to the list, making sure to seperate them with a comma,
 
-__ADD__ : Simply add a new line after the last allow (& above the deny all) being sure to enter a valid IPv4 address and end with a semi-colon '*_;_*'
+__REMOVE__ : Simply delete the IP, making sure the commas are cleared up.
 
-__REMOVE__ : Simply delete the entire line.
-
-Save the file and exit the editor.
-
-For the changes to take effect, you will need to restart the nginx service as follows;
-
-        sudo systemctl restart nginx
-
+Save the file and exit the editor.(nginx read directly this file so its live as its saved)
 
 ---
 
@@ -153,7 +141,7 @@ Install wscat one of two ways:
 
 Copy the following command and update with the your WSS CNAME that you entered at run time or in the vars file.
 
-        wscat -c wss://wss.EXAMPLE.com
+        wscat -c wss://EXAMPLE.com
 
 This should open another session within your terminal, similar to the below;
 
@@ -178,7 +166,9 @@ To apply repo updates to your local clone, be sure to stash any modifications yo
 This was all made possible by [@inv4fee2020](https://github.com/inv4fee2020/), this is 98% his work, I just copied pasta'd... and fixed his spelling mistakes like "utilising"... ;)
 
 A special thanks & shout out to the following community members for their input & testing;
+- [@nixer89](https://github.com/nixer89) helped with the websocket splitting
 - [@realgo140point6](https://github.com/go140point6)
+- [@gadget78](https://github.com/gadget78)
 - [@s4njk4n](https://github.com/s4njk4n)
 - @samsam
 
