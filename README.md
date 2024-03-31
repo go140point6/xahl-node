@@ -59,8 +59,7 @@ To download the script(s) to your local node & install, read over the following 
 
 The vars file allows you to manually update the following variables which help to avoid interactive prompts during the install;
 
-- `USER_DOMAINS` - your servers domain.
-- `ALLOW_LIST` - Enter a comma-separated list of IPs, that will be allowed acces to your xahau node.
+- `USER_DOMAINS` - your server domain.
 - `CERT_EMAIL` - email address for certificate renewals etc.
 
 The file also controls some of the packages that are installed on the node. More features will be added over time.
@@ -87,32 +86,28 @@ The following example will install a `mainnet` node
 
 ### Nginx related
 
-It is assumed that the node is being deployed to a dedicated host with no other nginx configuration. The node specific config is contained in the `NGX_CONF_NEW` variable which is a file named `xahau`.
+It is assumed that the node is being deployed to a dedicated host with no other nginx configuration. The node specific config is contained in the `NGX_CONF_NEW` variable which is a file named will be the domain name.
 
 As part of the installation, the script adds the ssh session source IPv4 address as a permitted source for accessing reverse proxied services. Operators should update this as necessary with additional source IPv4 addresses as required.
-
-#### Permitted Access - scripted
-
-__tbc__
-
-
 
 #### Permitted Access - manual
 
 In order to add/remove source IPv4 addresses from the permit list within the nginx config,
-you simply access the xahl_nodes.vars file with your preferred editor e.g. vim or nano etc.
-and modify the ALLOW_LIST variabble, and Enter a comma-separated list of IPs
 
-Open the file with the 'nano' editor;
-`sudo nano ~/xahl-node/xahl_node.vars`
+you edit the `nginx_allowlist.conf` file with your preferred editor e.g. vim or nano etc.
 
-and edit the `ALLOW_LIST=""` line, for example `ALLOW_LIST="142.250.187.195,172.67.174.115"`
+start every line with allow, a space, then the IP, and end the line with a semicolon.
 
-__ADD__ : Simply add a new IP to the list, making sure to seperate them with a comma,
+for example
 
-__REMOVE__ : Simply delete the IP, making sure the commas are cleared up.
+        allow 127.0.0.0;
+        allow 192.168.0.1;
 
-Save the file and exit the editor.(nginx read directly this file so its live as its saved)
+__ADD__ : Simply add a new line with the same syntax as above,
+
+__REMOVE__ : Simply delete the line.
+
+__RELOAD__ : for the changes to take effect you need to issue command `sudo nginx -s reload`
 
 ---
 
@@ -120,7 +115,7 @@ Save the file and exit the editor.(nginx read directly this file so its live as 
 
 The following are examples of tests that have been used successfully to validate correct operation;
 
-#### xahaud
+#### XAHAUD
 
 Run the following command:
 
@@ -128,7 +123,7 @@ Run the following command:
 
 Note: look for `"server_state" : "full",` and your xahaud should be working as expected.  May be "connected", if just installed. Give it time.
 
-#### Websocket
+#### WEBSOCKET
 
 Install wscat one of two ways:
 
@@ -139,14 +134,25 @@ Install wscat one of two ways:
 
         npm install -g wscat
 
-Copy the following command and update with the your WSS CNAME that you entered at run time or in the vars file.
+Copy the following command and update with the your server domain that you entered at run time (or in the vars file.)
 
-        wscat -c wss://EXAMPLE.com
+        wscat -c wss://yourdomain.com
 
 This should open another session within your terminal, similar to the below;
 
     Connected (press CTRL+C to quit)
     >
+
+and enter
+
+    { "command": "server_info" }
+
+#### RPC / API is easier to check
+
+a simple command from the command line
+
+    curl -X POST -H "Content-Type: application/json" -d '{"method":"server_info"}' http://127.0.0.1
+
 
 ---
 
