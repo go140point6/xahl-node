@@ -36,7 +36,8 @@ This script is automating the manual steps in here, please review for more infor
  - Supports the use of custom variables using the `xahl_node.vars` file
  - Detects UFW firewall & applies necessary firewall updates.
  - Installs & configures Nginx 
-   - Currently only supports multi-domain deployment with one A record & two CNAME records (requires operator has control over the domain)
+   - now sets up nginx so that it splits websocket and rpc traffic to the correct location on the backend
+   - TL;DR; you only need ONE domain pointing to this server now.
    - Automatically detects the ssh session source IP & adds to the config as a permitted source
  - Applies NIST security best practices
  
@@ -61,6 +62,7 @@ The vars file allows you to manually update the following variables which help t
 
 - `USER_DOMAINS` - your server domain.
 - `CERT_EMAIL` - email address for certificate renewals etc.
+- `XAHAU_NODE_SIZE` - allows you to state a "size" of the node, which change the amount of RAM, and HDD thats used.
 
 The file also controls some of the packages that are installed on the node. More features will be added over time.
 
@@ -94,7 +96,7 @@ As part of the installation, the script adds the ssh session source IPv4 address
 
 In order to add/remove source IPv4 addresses from the permit list within the nginx config,
 
-you edit the `nginx_allowlist.conf` file with your preferred editor e.g. vim or nano etc.
+you edit the `nginx_allowlist.conf` file with your preferred editor e.g. `nano nginx_allowlist.conf`.
 
 start every line with allow, a space, then the IP, and end the line with a semicolon.
 
@@ -125,7 +127,7 @@ Note: look for `"server_state" : "full",` and your xahaud should be working as e
 
 #### WEBSOCKET
 
-Install wscat one of two ways:
+Install if needed wscat one of two ways:
 
         sudo apt-get update
         sudo apt-get install node-ws
