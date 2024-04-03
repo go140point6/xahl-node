@@ -44,6 +44,8 @@ FUNC_PKG_CHECK(){
       sudo apt update -y && sudo apt upgrade -y
     fi
 
+    echo -e "${GREEN}## cycle through packages in vars file, and install... ${NC}"
+    echo     
     # cycle through packages in vars file, and install
     for i in "${SYS_PACKAGES[@]}"
     do
