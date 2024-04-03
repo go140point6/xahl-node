@@ -87,18 +87,17 @@ FUNC_CLONE_NODE_SETUP(){
     echo
     echo -e "${GREEN}## ${YELLOW}Starting Xahau Node install ...${NC}"
     echo
-    echo -e "Cloning repo https://github.com/Xahau/$VARVAL_CHAIN_REPO' to HOME directory ${NC}"
+    echo -e "Cloning repo https://github.com/Xahau/$VARVAL_CHAIN_REPO' ${NC}"
+    
     cd ~/
-    NODE_DIR=$VARVAL_CHAIN_REPO
-
-    if [ ! -d "$NODE_DIR" ]; then
-        echo "The directory '$NODE_DIR' does not exist."
-        git clone https://github.com/Xahau/$NODE_DIR
+    if [ ! -d "$VARVAL_CHAIN_REPO" ]; then
+        echo "The directory '$VARVAL_CHAIN_REPO' does not exist."
+        git clone https://github.com/Xahau/$VARVAL_CHAIN_REPO
     else
-        echo "The directory '$NODE_DIR' exists, no need to re-create.."
+        echo "The directory '$VARVAL_CHAIN_REPO' exists, no need to re-create.."
     fi
 
-    cd $NODE_DIR
+    cd $VARVAL_CHAIN_REPO
     sudo ./xahaud-install-update.sh
 
     echo
@@ -184,10 +183,15 @@ FUNC_CLONE_NODE_SETUP(){
         XAHAU_LEDGER_HISTORY="full"
         XAHAU_ONLINE_DELETE=""
     fi
+    echo "."
     sed -i "/^\[node_size\]/!b;n;c$XAHAU_NODE_SIZE" /opt/xahaud/etc/xahaud.cfg
+    echo ".."
     sed -i -e 's/^#\{0,1\}\(\[ledger_history\]\)/\1/; /^\[ledger_history\]/ { n; s/.*/'"$XAHAU_LEDGER_HISTORY"'/; }' /opt/xahaud/etc/xahaud.cfg   
+    echo "..."
     grep -q 'online_delete' /opt/xahaud/etc/xahaud.cfg || sed -i '/^online_delete.*/!{ /\[node_db\]/ s/$/\nonline_delete='"$XAHAU_ONLINE_DELETE"'/ }' /opt/xahaud/etc/xahaud.cfg
+    echo "...."
     sed -i "s/online_delete=.*/online_delete=$XAHAU_ONLINE_DELETE/" /opt/xahaud/etc/xahaud.cfg
+    echo "....."
 
     # restart xahau for changes to take effect
     sudo systemctl restart xahaud.service
@@ -270,11 +274,10 @@ FUNC_CERTBOT(){
     # Request and install a Let's Encrypt SSL/TLS certificate for Nginx
     echo -e "${GREEN}## ${YELLOW}Setup: Request and install a Lets Encrypt SSL/TLS certificate for domain: ${BYELLOW} $USER_DOMAINS${NC}"
     sudo certbot --nginx  -m "$CERT_EMAIL" -n --agree-tos -d "$USER_DOMAINS"
-    echo
-    echo -e "${NC}if all went well, your node will be accesibble at websocket ${BYELLOW}wss://$USER_DOMAINS${NC} or RPC/API ${BYELLOW}https://$USER_DOMAINS ${NC}"
+
     echo
     echo -e "${GREEN}#########################################################################${NC}"
-    sleep 2s
+    sleep 4s
 
 }
 
@@ -346,17 +349,23 @@ FUNC_ALLOWLIST_CHECK(){
     echo
     if grep -q -e "allow $SRC_IP;  # Detected IP of the SSH session" -e "allow $LOCAL_IP; # LocalIP of server" -e "allow $NODE_IP;  # ExternalIP of the Node itself" "$SCRIPT_DIR/nginx_allowlist.conf"; then
         # All three default IPs were found
-        echo "All deafult IPs found in Allowlist file"
+        echo "All default IPs already found in Allowlist file"
+        echo
     else
+        echo "adding some default IPs...
         if ! grep -q "allow $SRC_IP;  # Detected IP of the SSH session" "$SCRIPT_DIR/nginx_allowlist.conf"; then
             echo "allow $SRC_IP;  # Detected IP of the SSH session" >> $SCRIPT_DIR/nginx_allowlist.conf
+            echo "added IP $SRC_IP;  # Detected IP of the SSH session"
         fi
-        if ! grep -q "allow $LOCAL_IP; # LocalIP of server" "$SCRIPT_DIR/nginx_allowlist.conf"; then
-            echo "allow $LOCAL_IP; # LocalIP of server" >> $SCRIPT_DIR/nginx_allowlist.conf
+        if ! grep -q "allow $LOCAL_IP; # Local IP of server" "$SCRIPT_DIR/nginx_allowlist.conf"; then
+            echo "allow $LOCAL_IP; # Local IP of server" >> $SCRIPT_DIR/nginx_allowlist.conf
+            echo "added IP $LOCAL_IP; # Local IP of the server"
         fi
         if ! grep -q "allow $NODE_IP;  # ExternalIP of the Node itself" "$SCRIPT_DIR/nginx_allowlist.conf"; then
             echo "allow $NODE_IP;  # ExternalIP of the Node itself" >> $SCRIPT_DIR/nginx_allowlist.conf
+            echo "added IP $NODE_IP;  # ExternalIP of the Node itself"
         fi
+        echo
         echo "default IPs added to Allowlist file"
         echo
     fi
@@ -377,7 +386,7 @@ FUNC_ALLOWLIST_CHECK(){
             fi
         fi
     done
-    sleep 1s
+    sleep 2s
 }
 
 
@@ -516,6 +525,25 @@ FUNC_NODE_DEPLOY(){
     if [ -z "$USER_DOMAINS" ]; then
         read -p "Enter your servers domain (e.g., xahaunode.mydomain.com): " USER_DOMAINS
         sed -i "s/^USER_DOMAINS=.*/USER_DOMAINS=\"$USER_DOMAINS\"/" $SCRIPT_DIR/xahl_node.vars
+    fi
+
+    # check/install CERTBOT (for SSL)
+    echo
+    echo -e "${GREEN}#########################################################################${NC}"
+    echo 
+    echo -e "${GREEN}## ${YELLOW}Setup: Checking CERTBOT options... ${NC}"
+    echo
+
+    if [ -z "$INSTALL_CERTBOT_SSL" ]; then
+        read -p "Do you want to use install CERTBOT and use SSL? : True or false?" INSTALL_CERTBOT_SSL
+        sed -i "s/^INSTALL_CERTBOT_SSL=.*/INSTALL_CERTBOT_SSL=\"$INSTALL_CERTBOT_SSL\"/" $SCRIPT_DIR/xahl_node.vars
+    fi
+    if [ "$INSTALL_CERTBOT_SSL" == "true" ]; then
+        FUNC_CERTBOT;
+    else
+        echo -e "${GREEN}## ${YELLOW}Setup: Skipping CERTBOT install... ${NC}"
+        echo
+        echo
     fi
 
 
@@ -692,37 +720,20 @@ EOF
     echo
     echo -e "${GREEN}## Setup: removed old files, and Created and enabled a new Nginx configuration files ${NC}"
     echo
-    echo -e "${GREEN}## Nginx is now installed and running at Local IP:$LOCAL_IP listening for the domain: ${YELLOW}$USER_DOMAINS.${NC}"
-    echo
-
-    # check/install CERTBOT (for SSL)
+    echo -e "${NC}Nginx is now installed and running at Local IP: ${YELLOW}$LOCAL_IP${NC} listening for the domain: ${YELLOW}$USER_DOMAINS.${NC}"
     echo
     echo -e "${GREEN}#########################################################################${NC}"
-    echo 
-    echo -e "${GREEN}## ${YELLOW}Setup: Checking CERTBOT options... ${NC}"
     echo
-
-    if [ -z "$INSTALL_CERTBOT_SSL" ]; then
-        read -p "Do you want to use install CERTBOT and use SSL? : True or false?" INSTALL_CERTBOT_SSL
-        sed -i "s/^INSTALL_CERTBOT_SSL=.*/INSTALL_CERTBOT_SSL=\"$INSTALL_CERTBOT_SSL\"/" $SCRIPT_DIR/xahl_node.vars
-    fi
-    if [ "$INSTALL_CERTBOT_SSL" == "true" ]; then
-        FUNC_CERTBOT;
-    else
-            echo -e "${GREEN}## ${YELLOW}Setup: Skipping CERTBOT install... ${NC}"
-            echo
-            echo -e "if all went well, your node will now be acessible locally at; ${NC}"
-            echo
-            echo -e "websocket ${BYELLOW}ws://$LOCAL_IP${NC} or RPC/API ${BYELLOW}http://$LOCAL_IP ${NC}"
-            echo -e "and depending on your external setup, at domain: ${BYELLOW}$USER_DOMAINS ${NC}"
-            echo
-            echo -e "${GREEN}#########################################################################${NC}"
-    fi
-
+    echo -e "${NC}if all went well, your Xahau Node will now be up and running; ${NC}"
     echo
+    echo -e "${NC}locally, at websocket ${BYELLOW}ws://$LOCAL_IP${NC} or RPC/API ${BYELLOW}http://$LOCAL_IP ${NC}"
+    echo
+    echo -e "${NC}externally, at websocket ${BYELLOW}wss://$USER_DOMAINS${NC} or RPC/API ${BYELLOW}https://$USER_DOMAINS ${NC}"
     echo
     echo -e "use file ${BYELLOW}'$SCRIPT_DIR/$NGINX_ALLOWLIST_FILE'${NC} to add/remove IP addresses you want to allow access to your node${NC}"
     echo -e "once file is edited and saved, run command ${BYELLOW}sudo nginx -s reload${NC} to apply new settings ${NC}"
+    echo
+    echo -e "${NC}you can use command ${YELLOW}xahaud server_info${NC} to get info direct from the server"
     echo
     echo -e "${GREEN}## ${YELLOW}Setup complete.${NC}"
     echo
