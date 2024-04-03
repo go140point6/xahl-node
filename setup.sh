@@ -12,24 +12,6 @@ sudo -l > /dev/null 2>&1
 echo "Defaults:$USER_ID timestamp_timeout=-1" > /tmp/xahlsudotmp
 sudo sh -c 'cat /tmp/xahlsudotmp > /etc/sudoers.d/xahlnode_deploy'
 
-# Get some source IPs
-#current SSH session
-SRC_IP=$(echo $SSH_CONNECTION | awk '{print $1}')
-if [ -z "$SRC_IP" ]; then
-    SRC_IP="127.0.0.1"
-fi
-#this Nodes IP
-NODE_IP=$(curl -s ipinfo.io/ip)
-if [ -z "$NODE_IP" ]; then
-    NODE_IP="127.0.0.1"
-fi
-#dockers IP
-#DCKR_HOST_IP=$(sudo docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $VARVAL_CHAIN_NAME_xinfinnetwork_1)
-LOCAL_IP=$(hostname -I | awk '{print $1}')
-if [ -z "$LOCAL_IP" ]; then
-    LOCAL_IP="127.0.0.1"
-fi
-
 # Set Colour Vars
 GREEN='\033[0;32m'
 #RED='\033[0;31m'
@@ -345,14 +327,33 @@ FUNC_ALLOWLIST_CHECK(){
     echo
     echo -e "${GREEN}#########################################################################${NC}"
     echo
-    echo -e "${GREEN}## ${YELLOW}Setup: checking/setting up ALLOWLIST file...${NC}"
+    echo -e "${GREEN}## ${YELLOW}Setup: checking/setting up IPs, ALLOWLIST file...${NC}"
     echo
+
+    # Get some source IPs
+    #current SSH session
+    SRC_IP=$(echo $SSH_CONNECTION | awk '{print $1}')
+    if [ -z "$SRC_IP" ]; then
+        SRC_IP="127.0.0.1"
+    fi
+    #this Nodes IP
+    NODE_IP=$(curl -s ipinfo.io/ip)
+    if [ -z "$NODE_IP" ]; then
+        NODE_IP="127.0.0.1"
+    fi
+    #dockers IP
+    #DCKR_HOST_IP=$(sudo docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $VARVAL_CHAIN_NAME_xinfinnetwork_1)
+    LOCAL_IP=$(hostname -I | awk '{print $1}')
+    if [ -z "$LOCAL_IP" ]; then
+        LOCAL_IP="127.0.0.1"
+    fi
+
     if grep -q -e "allow $SRC_IP;  # Detected IP of the SSH session" -e "allow $LOCAL_IP; # LocalIP of server" -e "allow $NODE_IP;  # ExternalIP of the Node itself" "$SCRIPT_DIR/nginx_allowlist.conf"; then
         # All three default IPs were found
         echo "All default IPs already found in Allowlist file"
         echo
     else
-        echo "adding some default IPs...
+        echo "adding some default IPs..."
         if ! grep -q "allow $SRC_IP;  # Detected IP of the SSH session" "$SCRIPT_DIR/nginx_allowlist.conf"; then
             echo "allow $SRC_IP;  # Detected IP of the SSH session" >> $SCRIPT_DIR/nginx_allowlist.conf
             echo "added IP $SRC_IP;  # Detected IP of the SSH session"
