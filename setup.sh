@@ -568,7 +568,7 @@ FUNC_NODE_DEPLOY(){
         sudo rm -f $NGX_CONF_ENABLED/default
     fi
     if [  -f $NGX_CONF_ENABLED/xahau ]; then
-        sudo rm -f $NGX_CONF_NEW/xahau
+        sudo rm -f $NGX_CONF_ENABLED/xahau
     fi 
     if [  -f $NGX_CONF_NEW/$USER_DOMAINS ]; then
         sudo rm -f $NGX_CONF_NEW/$USER_DOMAINS
