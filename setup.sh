@@ -132,9 +132,9 @@ FUNC_CLONE_NODE_SETUP(){
     if [ "$XAHAU_NODE_SIZE" != "tiny" ] && [ "$XAHAU_NODE_SIZE" != "medium" ] && [ "$XAHAU_NODE_SIZE" != "huge" ]; then
         echo -e "${RED}XAHAU_NODE_SIZE not set in $SCRIPT_DIR/xahl_node.vars file. =$XAHAU_NODE_SIZE"
         echo "Please choose an option:"
-        echo "1. tiny = less than 8G RAM"
-        echo "2. medium = 8-16G RAM"
-        echo "3. huge = 32G+ RAM"
+        echo "1. tiny = less than 8G-RAM, 50GB-HDD"
+        echo "2. medium = 8-16G RAM, 250GBB-HDD"
+        echo "3. huge = 32G+ RAM, no limit on HDD"
         read -p "Enter your choice [1-3]: " choice
         
         case $choice in
@@ -256,8 +256,8 @@ FUNC_CERTBOT(){
     fi
 
     # Request and install a Let's Encrypt SSL/TLS certificate for Nginx
-    echo -e "${GREEN}## ${YELLOW}Setup: Request and install a Lets Encrypt SSL/TLS certificate for domain: ${BYELLOW} $USER_DOMAINS${NC}"
-    sudo certbot --nginx  -m "$CERT_EMAIL" -n --agree-tos -d "$USER_DOMAINS"
+    echo -e "${GREEN}## ${YELLOW}Setup: Request and install a Lets Encrypt SSL/TLS certificate for domain: ${BYELLOW} $USER_DOMAIN${NC}"
+    sudo certbot --nginx  -m "$CERT_EMAIL" -n --agree-tos -d "$USER_DOMAIN"
 
     echo
     echo -e "${GREEN}#########################################################################${NC}"
@@ -301,7 +301,7 @@ FUNC_LOGROTATE(){
 
     fi
 
-        cat <<EOF > /tmp/tmpxinfin-logs
+        cat <<EOF > /tmp/tmpxahau-logs
 /opt/xahaud/log/*.log
         {
             su $USER_ID $USER_ID
@@ -320,9 +320,7 @@ FUNC_LOGROTATE(){
         }    
 EOF
 
-    sudo sh -c 'cat /tmp/tmpxinfin-logs > /etc/logrotate.d/xahau-logs'
-
-}
+    sudo sh -c 'cat /tmp/tmpxahau-logs > /etc/logrotate.d/xahau-logs'
 
 
 FUNC_ALLOWLIST_CHECK(){
@@ -392,10 +390,263 @@ FUNC_ALLOWLIST_CHECK(){
     sleep 2s
 }
 
+FUNC_INSTALL_LANDINGPAGE(){
+    echo
+    echo -e "${GREEN}#########################################################################${NC}"
+    echo 
+    echo -e "${GREEN}## ${YELLOW}Setup: Installing Landing page... ${NC}"
+    echo
 
+    if [ -z "$INSTALL_LANDNGPAGE" ]; then
+        read -p "Do you want to use (re)install the landng webpage?: True or false?" INSTALL_LANDNGPAGE
+        sed -i "s/^INSTALL_LANDNGPAGE=.*/INSTALL_LANDNGPAGE=\"$INSTALL_LANDNGPAGE\"/" $SCRIPT_DIR/xahl_node.vars
+    fi
+    if [ "$INSTALL_LANDNGPAGE" == "true" ]; then
+        
+        mkdir -p /home/www
+        echo "created /home/www directory for webfiles, and re-installing webpage"
+        rm /home/www/index.html
+        sudo cat <<EOF > /home/www/index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xahau Node</title>
+    <link rel="stylesheet" href="styles.css"> <!-- External CSS file -->
+</head>
+<style>
+    body {
+        background-color: #121212;
+        color: #ffffff;
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        margin: 2;
+        text-align: center;
+    }
 
+    h1 {
+        font-size: 28px;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
 
+    .container {
+        max-width: 300px;
+        margin: 0 auto;
+        margin-bottom: 20px;
+        padding: 20px;
+        border: 2px solid #ffffff;
+        border-radius: 10px;
+        text-align: left; /* Align content to the left */
+    }
 
+    #serverInfo {
+        background-color: #1a1a1a;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 10px;
+        margin: 0 auto;
+        max-width: 600px;
+        color: #ffffff;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        white-space: pre-wrap;
+        overflow: auto; /* Add scrollbars if needed */
+        text-align: left; /* Align content to the left */
+    }
+</style>
+<body>
+    <h1>Xahau Node Landing Page</h1>
+
+    <div class="container">
+        <h1>Server Info</h1>
+        <p>Status: <span id="status"></span></p>
+        <p>Build Version: <span id="buildVersion"></span></p>
+        <p>Current Ledger: <span id="currentLedger"></span></p>
+        <p>Complete Ledgers: <span id="completeLedgers"></span></p>
+        <p>Last Refresh: <span id="time"></span></p>
+    </div>
+
+    <pre id="serverInfo"></pre>
+
+    <script>
+        const dataToSend = {"method":"server_info"};
+        fetch('https://$USER_DOMAIN', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dataToSend)
+        })
+            .then(response => {
+                return response.json();
+            })
+            .then(serverInfo => {
+                const formattedJson = JSON.stringify(serverInfo, null, 2);
+                document.getElementById('serverInfo').textContent = formattedJson;
+                document.getElementById('status').textContent = serverInfo.result.status;
+                document.getElementById('buildVersion').textContent = serverInfo.result.info.build_version;
+                document.getElementById('currentLedger').textContent = serverInfo.result.info.validated_ledger.seq;
+                document.getElementById('completeLedgers').textContent = serverInfo.result.info.complete_ledgers;
+                document.getElementById('time').textContent = serverInfo.result.info.time;
+            })
+            .catch(error => {
+                console.error('Error fetching server info:', error);
+                document.getElementById('status').textContent = "failed, server could be down";
+                document.getElementById('status').style.color = "red";
+            });
+    </script>
+</body>
+</html>
+EOF
+
+        mkdir -p /home/www/error
+        echo "created /home/www/error directory for blocked page, re-installing webpage"
+        rm /home/www/error/custom_403.html
+        sudo cat <<EOF > /home/www/error/custom_403.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xahau Node</title>
+</head>
+<style>
+body {
+    background-color: #121212;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    margin: 2;
+    text-align: center;
+}
+
+h1 {
+    font-size: 28px;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.container {
+    max-width: 300px;
+    margin: 0 auto;
+    margin-bottom: 20px;
+    padding: 20px;
+    border: 2px solid #ffffff;
+    border-radius: 10px;
+    text-align: left; /* Align content to the left */
+}
+
+#serverInfo {
+    background-color: #1a1a1a;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 10px;
+    margin: 0 auto;
+    max-width: 600px;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    white-space: pre-wrap;
+    overflow: auto; /* Add scrollbars if needed */
+    text-align: left; /* Align content to the left */
+}
+</style>
+
+<body>
+    <h1>Xahau Node Landing Page</h1>
+
+    <div class="container">
+        <h1>Server Info</h1>
+        <p><span style="color: red;">THIS SERVER IS BLOCKING YOUR IP</span></p>
+        <p>Contact Email: $CERT_EMAIL</p>
+        <p>YourIP: <span id="realip"></p>
+        <p>X-Real-IP: <span id="xrealip"></p>
+        <p>-</p>
+
+        <p>Status: </p>
+        <p>Build Version: </p>
+        <p>Current Ledger: </p>
+        <p>Complete Ledgers: </span></p>
+        <p>Last Refresh: </span></p>
+    </div>
+
+    <pre id="serverInfo"></pre>
+
+    <script>
+        const dataToSend = {"method":"server_info"};
+        fetch('https://$USER_DOMAIN', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dataToSend)
+        })
+        .then(response => {
+            const xRealIp = response.headers.get('X-Real-IP');
+            document.getElementById('xrealip').textContent = xRealIp;
+        })
+        .catch(error => {
+            console.error('Error fetching X-Real-IP:', error);
+            document.getElementById('xrealip').textContent = "unknown";
+        });
+
+        fetch('https://ipinfo.io/ip')
+        .then(response => response.text())
+        .then(ipinfo => {
+            document.getElementById('realip').textContent = ipinfo;
+        })
+        .catch(error => {
+            console.error('Error fetching client IP:', error);
+            document.getElementById('realip').textContent = "unknown";
+        });
+    </script>
+
+</body>
+</html>
+EOF
+
+    else
+        echo -e "${GREEN}## ${YELLOW}Setup: Skipped re-installing Landng webpage install, due to vars file config... ${NC}"
+        echo
+        echo
+    fi
+
+    if [ -z "$INSTALL_TOML" ]; then
+        read -p "Do you want to use (re)install the default xahau.toml file?: True or false?" INSTALL_TOML
+        sed -i "s/^INSTALL_TOML=.*/INSTALL_TOML=\"$INSTALL_TOML\"/" $SCRIPT_DIR/xahl_node.vars
+    fi
+    if [ "$INSTALL_TOML" == "true" ]; then
+        
+        mkdir -p /home/www/.well-known
+        echo "created /home/www.well-known directory for webfiles, and re-installing webpage"
+        rm /home/www/index.html
+        sudo cat <<EOF > /home/www/.well-known/xahau.toml
+[[METADATA]]
+modified = $FDATE
+
+[[SERVERS]]
+domain = "https://$USER_DOMAIN"
+type = "$XAHAU_NODE_SIZE"
+chain = "$VARVAL_CHAIN_NAME"
+install = "created by g140point6 & gadget78 Node Script"
+
+[[PRINCIPALS]]
+name = "evernode"
+email = "$CERT_EMAIL"
+discord = ""
+
+# End of file
+EOF
+
+    else
+        echo -e "${GREEN}## ${YELLOW}Setup: Skipped re-installing default xahau.toml file, due to vars file config... ${NC}"
+        echo
+        echo
+    fi
+
+}
 
 
 FUNC_NODE_DEPLOY(){
@@ -525,9 +776,9 @@ FUNC_NODE_DEPLOY(){
     FUNC_ALLOWLIST_CHECK;
 
     # Prompt for user domains if not provided as a variable
-    if [ -z "$USER_DOMAINS" ]; then
-        read -p "Enter your servers domain (e.g., xahaunode.mydomain.com): " USER_DOMAINS
-        sed -i "s/^USER_DOMAINS=.*/USER_DOMAINS=\"$USER_DOMAINS\"/" $SCRIPT_DIR/xahl_node.vars
+    if [ -z "$USER_DOMAIN" ]; then
+        read -p "Enter your servers domain (e.g., xahaunode.mydomain.com): " USER_DOMAIN
+        sed -i "s/^USER_DOMAIN=.*/USER_DOMAIN=\"$USER_DOMAIN\"/" $SCRIPT_DIR/xahl_node.vars
     fi
 
     # check/install CERTBOT (for SSL)
@@ -549,6 +800,8 @@ FUNC_NODE_DEPLOY(){
         echo
     fi
 
+    #setup and install the landing page,
+    FUNC_INSTALL_LANDINGPAGE;
 
     # Create a new Nginx configuration file with the user-provided domain....
     echo
@@ -570,28 +823,28 @@ FUNC_NODE_DEPLOY(){
     if [  -f $NGX_CONF_ENABLED/xahau ]; then
         sudo rm -f $NGX_CONF_ENABLED/xahau
     fi 
-    if [  -f $NGX_CONF_NEW/$USER_DOMAINS ]; then
-        sudo rm -f $NGX_CONF_NEW/$USER_DOMAINS
+    if [  -f $NGX_CONF_NEW/$USER_DOMAIN ]; then
+        sudo rm -f $NGX_CONF_NEW/$USER_DOMAIN
     fi   
      
-    sudo touch $NGX_CONF_NEW/$USER_DOMAINS
-    sudo chmod 666 $NGX_CONF_NEW/$USER_DOMAINS 
+    sudo touch $NGX_CONF_NEW/$USER_DOMAIN
+    sudo chmod 666 $NGX_CONF_NEW/$USER_DOMAIN 
     
     if [ "$INSTALL_CERTBOT_SSL" == "true" ]; then
-        sudo cat <<EOF > $NGX_CONF_NEW/$USER_DOMAINS
+        sudo cat <<EOF > $NGX_CONF_NEW/$USER_DOMAIN
 server {
     listen 80;
-    server_name $USER_DOMAINS;
+    server_name $USER_DOMAIN;
     return 301 https://\$host\$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name $USER_DOMAINS;
+    server_name $USER_DOMAIN;
 
     # SSL certificate paths
-    ssl_certificate /etc/letsencrypt/live/$USER_DOMAINS/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/$USER_DOMAINS/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/$USER_DOMAIN/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/$USER_DOMAIN/privkey.pem;
 
     # Other SSL settings
     ssl_protocols TLSv1.3 TLSv1.2;
@@ -605,6 +858,14 @@ server {
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
+    proxy_set_header Host \$host;
+    proxy_set_header X-Real-IP \$remote_addr;
+
+    error_page 403 /custom_403.html;
+    location /custom_403.html {
+        root /home/www/error;
+        internal;
+    }
     
     location / {
         try_files \$uri \$uri/ =404;
@@ -619,15 +880,18 @@ server {
                 add_header X-Upstream \$upstream_addr;
                 proxy_pass  http://localhost:$VARVAL_CHAIN_WSS;
         }
+        if ($request_method = POST) {
+                proxy_pass http://localhost:$VARVAL_CHAIN_RPC;
+        }
 
-        proxy_pass http://localhost:$VARVAL_CHAIN_RPC;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
+        root /home/www;
     }
 
-    # Additional server configurations
+    location /.well-known/xahau.toml {
+        allow all;
+        try_files \$uri \$uri/ =403;
+        root /home/www;
+    }
 
     # Set Content Security Policy (CSP) header
     add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline';";
@@ -642,14 +906,14 @@ EOF
     sudo chmod 644 $NGX_CONF_NEW
 
     else
-    sudo cat <<EOF > $NGX_CONF_NEW/$USER_DOMAINS
+    sudo cat <<EOF > $NGX_CONF_NEW/$USER_DOMAIN
 server {
     listen 80;
-    server_name $USER_DOMAINS;
+    server_name $USER_DOMAIN;
 
     # SSL certificate paths
-    #ssl_certificate /etc/letsencrypt/live/$USER_DOMAINS/fullchain.pem;
-    #ssl_certificate_key /etc/letsencrypt/live/$USER_DOMAINS/privkey.pem;
+    #ssl_certificate /etc/letsencrypt/live/$USER_DOMAIN/fullchain.pem;
+    #ssl_certificate_key /etc/letsencrypt/live/$USER_DOMAIN/privkey.pem;
 
     # Other SSL settings
     #ssl_protocols TLSv1.3 TLSv1.2;
@@ -663,6 +927,14 @@ server {
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
+    proxy_set_header Host \$host;
+    proxy_set_header X-Real-IP \$remote_addr;
+
+    error_page 403 /custom_403.html;
+    location /custom_403.html {
+        root /home/www/error;
+        internal;
+    }
     
     location / {
         try_files \$uri \$uri/ =404;
@@ -677,15 +949,18 @@ server {
                 add_header X-Upstream \$upstream_addr;
                 proxy_pass  http://localhost:$VARVAL_CHAIN_WSS;
         }
+        if ($request_method = POST) {
+                proxy_pass http://localhost:$VARVAL_CHAIN_RPC;
+        }
 
-        proxy_pass http://localhost:$VARVAL_CHAIN_RPC;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
+        root /home/www;
     }
 
-    # Additional server configurations
+    location /.well-known/xahau.toml {
+        allow all;
+        try_files \$uri \$uri/ =403;
+        root /home/www;
+    }
 
     # Set Content Security Policy (CSP) header
     add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline';";
@@ -701,8 +976,8 @@ EOF
     fi
 
     #check if symbolic link file exists in sites-enabled, if not create it
-    if [ ! -f $NGX_CONF_ENABLED/$USER_DOMAINS ]; then
-        sudo ln -s $NGX_CONF_NEW/$USER_DOMAINS $NGX_CONF_ENABLED/$USER_DOMAINS
+    if [ ! -f $NGX_CONF_ENABLED/$USER_DOMAIN ]; then
+        sudo ln -s $NGX_CONF_NEW/$USER_DOMAIN $NGX_CONF_ENABLED/$USER_DOMAIN
     fi
     
     # Start/Reload Nginx to apply all the new configuration
@@ -723,7 +998,7 @@ EOF
     echo
     echo -e "${GREEN}## Setup: removed old files, and Created and enabled a new Nginx configuration files ${NC}"
     echo
-    echo -e "${NC}Nginx is now installed and running at Local IP: ${YELLOW}$LOCAL_IP${NC} listening for the domain: ${YELLOW}$USER_DOMAINS.${NC}"
+    echo -e "${NC}Nginx is now installed and running at Local IP: ${YELLOW}$LOCAL_IP${NC} listening for the domain: ${YELLOW}$USER_DOMAIN.${NC}"
     echo
     echo -e "${GREEN}#########################################################################${NC}"
     echo
@@ -731,7 +1006,7 @@ EOF
     echo
     echo -e "${NC}locally, at websocket ${BYELLOW}ws://$LOCAL_IP${NC} or RPC/API ${BYELLOW}http://$LOCAL_IP ${NC}"
     echo
-    echo -e "${NC}externally, at websocket ${BYELLOW}wss://$USER_DOMAINS${NC} or RPC/API ${BYELLOW}https://$USER_DOMAINS ${NC}"
+    echo -e "${NC}externally, at websocket ${BYELLOW}wss://$USER_DOMAIN${NC} or RPC/API ${BYELLOW}https://$USER_DOMAIN ${NC}"
     echo
     echo -e "use file ${BYELLOW}'$SCRIPT_DIR/$NGINX_ALLOWLIST_FILE'${NC} to add/remove IP addresses you want to allow access to your node${NC}"
     echo -e "once file is edited and saved, run command ${BYELLOW}sudo nginx -s reload${NC} to apply new settings ${NC}"
