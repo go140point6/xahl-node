@@ -322,6 +322,8 @@ EOF
 
     sudo sh -c 'cat /tmp/tmpxahau-logs > /etc/logrotate.d/xahau-logs'
 
+}
+
 
 FUNC_ALLOWLIST_CHECK(){
     echo
@@ -397,15 +399,16 @@ FUNC_INSTALL_LANDINGPAGE(){
     echo -e "${GREEN}## ${YELLOW}Setup: Installing Landing page... ${NC}"
     echo
 
-    if [ -z "$INSTALL_LANDNGPAGE" ]; then
-        read -p "Do you want to use (re)install the landng webpage?: True or false?" INSTALL_LANDNGPAGE
-        sed -i "s/^INSTALL_LANDNGPAGE=.*/INSTALL_LANDNGPAGE=\"$INSTALL_LANDNGPAGE\"/" $SCRIPT_DIR/xahl_node.vars
+    if [ -z "$INSTALL_LANDINGPAGE" ]; then
+        read -p "Do you want to (re)install the landng webpage?: true or false?" INSTALL_LANDINGPAGE
+        sed -i "s/^INSTALL_LANDINGPAGE=.*/INSTALL_LANDINGPAGE=\"$INSTALL_LANDINGPAGE\"/" $SCRIPT_DIR/xahl_node.vars
     fi
-    if [ "$INSTALL_LANDNGPAGE" == "true" ]; then
+    if [ "$INSTALL_LANDINGPAGE" == "true" ]; then
         
         mkdir -p /home/www
         echo "created /home/www directory for webfiles, and re-installing webpage"
-        rm /home/www/index.html
+        rm -f /home/www/index.html
+        sleep 1s
         sudo cat <<EOF > /home/www/index.html
 <!DOCTYPE html>
 <html lang="en">
@@ -503,7 +506,8 @@ EOF
 
         mkdir -p /home/www/error
         echo "created /home/www/error directory for blocked page, re-installing webpage"
-        rm /home/www/error/custom_403.html
+        rm -r /home/www/error/custom_403.html
+        sleep 1s
         sudo cat <<EOF > /home/www/error/custom_403.html
 <!DOCTYPE html>
 <html lang="en">
@@ -614,7 +618,7 @@ EOF
     fi
 
     if [ -z "$INSTALL_TOML" ]; then
-        read -p "Do you want to use (re)install the default xahau.toml file?: True or false?" INSTALL_TOML
+        read -p "Do you want to (re)install the default xahau.toml file?: true or false?" INSTALL_TOML
         sed -i "s/^INSTALL_TOML=.*/INSTALL_TOML=\"$INSTALL_TOML\"/" $SCRIPT_DIR/xahl_node.vars
     fi
     if [ "$INSTALL_TOML" == "true" ]; then
@@ -777,7 +781,7 @@ FUNC_NODE_DEPLOY(){
 
     # Prompt for user domains if not provided as a variable
     if [ -z "$USER_DOMAIN" ]; then
-        read -p "Enter your servers domain (e.g., xahaunode.mydomain.com): " USER_DOMAIN
+        read -p "Enter your servers domain (e.g. mydomain.com or a subdomain like xahau.mydomain.com ): " USER_DOMAIN
         sed -i "s/^USER_DOMAIN=.*/USER_DOMAIN=\"$USER_DOMAIN\"/" $SCRIPT_DIR/xahl_node.vars
     fi
 
@@ -789,7 +793,7 @@ FUNC_NODE_DEPLOY(){
     echo
 
     if [ -z "$INSTALL_CERTBOT_SSL" ]; then
-        read -p "Do you want to use install CERTBOT and use SSL? : True or false?" INSTALL_CERTBOT_SSL
+        read -p "Do you want to use install CERTBOT and use SSL? : true or false?" INSTALL_CERTBOT_SSL
         sed -i "s/^INSTALL_CERTBOT_SSL=.*/INSTALL_CERTBOT_SSL=\"$INSTALL_CERTBOT_SSL\"/" $SCRIPT_DIR/xahl_node.vars
     fi
     if [ "$INSTALL_CERTBOT_SSL" == "true" ]; then
@@ -811,18 +815,20 @@ FUNC_NODE_DEPLOY(){
     echo
 
     #delete default and old files, along with symbolic link file if it exists
-    if [  -f $NGX_CONF_NEW/default ]; then
-        sudo rm -f $NGX_CONF_NEW/default
-    fi
-    if [  -f $NGX_CONF_NEW/xahau ]; then
-        sudo rm -f $NGX_CONF_NEW/xahau
-    fi
     if [  -f $NGX_CONF_ENABLED/default ]; then
         sudo rm -f $NGX_CONF_ENABLED/default
     fi
+    if [  -f $NGX_CONF_NEW/default ]; then
+        sudo rm -f $NGX_CONF_NEW/default
+    fi
+
     if [  -f $NGX_CONF_ENABLED/xahau ]; then
         sudo rm -f $NGX_CONF_ENABLED/xahau
     fi 
+    if [  -f $NGX_CONF_NEW/xahau ]; then
+        sudo rm -f $NGX_CONF_NEW/xahau
+    fi
+    
     if [  -f $NGX_CONF_NEW/$USER_DOMAIN ]; then
         sudo rm -f $NGX_CONF_NEW/$USER_DOMAIN
     fi   
@@ -880,7 +886,7 @@ server {
                 add_header X-Upstream \$upstream_addr;
                 proxy_pass  http://localhost:$VARVAL_CHAIN_WSS;
         }
-        if ($request_method = POST) {
+        if (\$request_method = POST) {
                 proxy_pass http://localhost:$VARVAL_CHAIN_RPC;
         }
 
@@ -949,7 +955,7 @@ server {
                 add_header X-Upstream \$upstream_addr;
                 proxy_pass  http://localhost:$VARVAL_CHAIN_WSS;
         }
-        if ($request_method = POST) {
+        if (\$request_method = POST) {
                 proxy_pass http://localhost:$VARVAL_CHAIN_RPC;
         }
 

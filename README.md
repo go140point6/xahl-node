@@ -50,9 +50,10 @@ To download the script(s) to your local node & install, read over the following 
 ## Clone the repo, and prep for starting
 
         cd /root
+        apt install git
         git clone https://github.com/go140point6/xahl-node
         cd xahl-node
-        chmod +x *.sh`
+        chmod +x *.sh
 
 adjust default settings with the var file, see below, then start the install with 
 
