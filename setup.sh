@@ -25,7 +25,7 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 source $SCRIPT_DIR/xahl_node.vars
 
 #setup date
-FDATE=$(date +"%Y_%m_%d_%H_%M")
+FDATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 
 FUNC_PKG_CHECK(){
@@ -250,6 +250,7 @@ FUNC_CERTBOT(){
 
     # Prompt for user email if not provided as a variable
     if [ -z "$CERT_EMAIL" ]; then
+        echo
         read -p "Enter your email address for certbot updates: " CERT_EMAIL
         sed -i "s/^CERT_EMAIL=.*/CERT_EMAIL=\"$CERT_EMAIL\"/" $SCRIPT_DIR/xahl_node.vars
         echo
@@ -408,7 +409,6 @@ FUNC_INSTALL_LANDINGPAGE(){
         mkdir -p /home/www
         echo "created /home/www directory for webfiles, and re-installing webpage"
         rm -f /home/www/index.html
-        sleep 1s
         sudo cat <<EOF > /home/www/index.html
 <!DOCTYPE html>
 <html lang="en">
@@ -416,7 +416,6 @@ FUNC_INSTALL_LANDINGPAGE(){
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Xahau Node</title>
-    <link rel="stylesheet" href="styles.css"> <!-- External CSS file -->
 </head>
 <style>
     body {
@@ -507,7 +506,6 @@ EOF
         mkdir -p /home/www/error
         echo "created /home/www/error directory for blocked page, re-installing webpage"
         rm -r /home/www/error/custom_403.html
-        sleep 1s
         sudo cat <<EOF > /home/www/error/custom_403.html
 <!DOCTYPE html>
 <html lang="en">
@@ -624,8 +622,8 @@ EOF
     if [ "$INSTALL_TOML" == "true" ]; then
         
         mkdir -p /home/www/.well-known
-        echo "created /home/www.well-known directory for webfiles, and re-installing webpage"
-        rm /home/www/index.html
+        echo "created /home/www.well-known directory for .toml file, and re-creating default .toml file"
+        rm -f /home/www/.well-known/xahau.toml
         sudo cat <<EOF > /home/www/.well-known/xahau.toml
 [[METADATA]]
 modified = $FDATE
@@ -649,7 +647,8 @@ EOF
         echo
         echo
     fi
-
+    echo
+    sleep 2s
 }
 
 
@@ -899,9 +898,6 @@ server {
         root /home/www;
     }
 
-    # Set Content Security Policy (CSP) header
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline';";
-
     # Enable XSS protection
     add_header X-Content-Type-Options nosniff;
     add_header X-Frame-Options "SAMEORIGIN";
@@ -967,9 +963,6 @@ server {
         try_files \$uri \$uri/ =403;
         root /home/www;
     }
-
-    # Set Content Security Policy (CSP) header
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline';";
 
     # Enable XSS protection
     add_header X-Content-Type-Options nosniff;
