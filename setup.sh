@@ -827,16 +827,12 @@ FUNC_NODE_DEPLOY(){
     if [  -f $NGX_CONF_NEW/xahau ]; then
         sudo rm -f $NGX_CONF_NEW/xahau
     fi
-    
-    if [  -f $NGX_CONF_NEW/$USER_DOMAIN ]; then
-        sudo rm -f $NGX_CONF_NEW/$USER_DOMAIN
-    fi   
      
-    sudo touch $NGX_CONF_NEW/$USER_DOMAIN
-    sudo chmod 666 $NGX_CONF_NEW/$USER_DOMAIN 
+    sudo touch $NGX_CONF_NEW/xahau
+    sudo chmod 666 $NGX_CONF_NEW/xahau
     
     if [ "$INSTALL_CERTBOT_SSL" == "true" ]; then
-        sudo cat <<EOF > $NGX_CONF_NEW/$USER_DOMAIN
+        sudo cat <<EOF > $NGX_CONF_NEW/xahau
 server {
     listen 80;
     server_name $USER_DOMAIN;
@@ -908,7 +904,7 @@ EOF
     sudo chmod 644 $NGX_CONF_NEW
 
     else
-    sudo cat <<EOF > $NGX_CONF_NEW/$USER_DOMAIN
+    sudo cat <<EOF > $NGX_CONF_NEW/xahau
 server {
     listen 80;
     server_name $USER_DOMAIN;
@@ -975,8 +971,8 @@ EOF
     fi
 
     #check if symbolic link file exists in sites-enabled, if not create it
-    if [ ! -f $NGX_CONF_ENABLED/$USER_DOMAIN ]; then
-        sudo ln -s $NGX_CONF_NEW/$USER_DOMAIN $NGX_CONF_ENABLED/$USER_DOMAIN
+    if [ ! -f $NGX_CONF_ENABLED/xahau ]; then
+        sudo ln -s $NGX_CONF_NEW/xahau $NGX_CONF_ENABLED/xahau
     fi
     
     # Start/Reload Nginx to apply all the new configuration
