@@ -863,8 +863,8 @@ server {
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
-    proxy_set_header Host \$host;
-    proxy_set_header X-Real-IP \$remote_addr;
+    add_header Host \$host;
+    add_header X-Real-IP \$remote_addr;
 
     error_page 403 /custom_403.html;
     location /custom_403.html {
@@ -929,8 +929,8 @@ server {
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
-    proxy_set_header Host \$host;
-    proxy_set_header X-Real-IP \$remote_addr;
+    add_header Host \$host;
+    add_header X-Real-IP \$remote_addr;
 
     error_page 403 /custom_403.html;
     location /custom_403.html {

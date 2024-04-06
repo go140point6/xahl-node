@@ -47,6 +47,12 @@ This script is automating the manual steps in here, please review for more infor
 
 To download the script(s) to your local node & install, read over the following sections and when ready simply copy and paste the code snippets to your terminal window.
 
+## to UPDATE
+
+if you are updating from an older version, where the allow list was saved in `/etc/nginx/sites-available/xahau` then save them 1st with
+
+        sudo nano /etc/nginx/sites-available/xahau
+
 ## Clone the repo, and prep for starting
 
         cd /root
