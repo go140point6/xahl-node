@@ -220,7 +220,7 @@ FUNC_ENABLE_UFW(){
     echo 
     # source: https://handyman.dulare.com/ufw-block-messages-in-syslog-how-to-get-rid-of-them/
     sudo sed -i -e 's/\#& stop/\& stop/g' /etc/rsyslog.d/20-ufw.conf
-    sudo cat /etc/rsyslog.d/20-ufw.conf | grep -s '& stop'
+    sudo cat /etc/rsyslog.d/20-ufw.conf | grep '& stop'
     echo -e "Logging changed to ufw.log only."
 
     echo 
@@ -665,7 +665,7 @@ FUNC_NODE_DEPLOY(){
     sleep 3s
 
     # installs updates, and default packages listed in vars file
-    FUNC_PKG_CHECK;
+    #FUNC_PKG_CHECK;
     #FUNC_EXIT;
 
     if [ "$VARVAL_CHAIN_NAME" != "mainnet" ] && [ "$VARVAL_CHAIN_NAME" != "testnet" ] && [ "$VARVAL_CHAIN_NAME" != "logrotate" ]; then
@@ -748,8 +748,8 @@ FUNC_NODE_DEPLOY(){
         echo -e "${GREEN}UFW is ALREADY installed ${NC}"
         echo
         # Setup UFW
-        FUNC_SETUP_UFW_PORTS;
-        FUNC_ENABLE_UFW;
+        #FUNC_SETUP_UFW_PORTS;
+        #FUNC_ENABLE_UFW;
         #FUNC_EXIT;
     else
         echo
@@ -765,24 +765,24 @@ FUNC_NODE_DEPLOY(){
             echo -e "${GREEN}## ${YELLOW}Setup: Installing UFW... ${NC}"
             echo
             sudo apt install ufw
-            FUNC_SETUP_UFW_PORTS;
-            FUNC_ENABLE_UFW;
+            #FUNC_SETUP_UFW_PORTS;
+            #FUNC_ENABLE_UFW;
             #FUNC_EXIT;
         fi
     fi
     
 
     # Xahau Node setup
-    FUNC_CLONE_NODE_SETUP;
+    #FUNC_CLONE_NODE_SETUP;
     #FUNC_EXIT;
 
     # Rotate logs on regular basis
-    FUNC_LOGROTATE;
+    #FUNC_LOGROTATE;
     #FUNC_EXIT;
 
     # Add/check AllowList
-    FUNC_ALLOWLIST_CHECK;
-    FUNC_EXIT;
+    #FUNC_ALLOWLIST_CHECK;
+    #FUNC_EXIT;
 
     # Prompt for user domains if not provided as a variable
     if [ -z "$USER_DOMAIN" ]; then
