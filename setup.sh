@@ -781,8 +781,8 @@ FUNC_NODE_DEPLOY(){
     #FUNC_EXIT;
 
     # Add/check AllowList
-    FUNC_ALLOWLIST_CHECK;
-    FUNC_EXIT;
+    #FUNC_ALLOWLIST_CHECK;
+    #FUNC_EXIT;
 
     # Prompt for user domains if not provided as a variable
     if [ -z "$USER_DOMAIN" ]; then
@@ -803,6 +803,7 @@ FUNC_NODE_DEPLOY(){
     fi
     if [ "$INSTALL_CERTBOT_SSL" == "true" ]; then
         FUNC_CERTBOT;
+        FUNC_EXIT;
     else
         echo -e "${GREEN}## ${YELLOW}Setup: Skipping CERTBOT install... ${NC}"
         echo
