@@ -96,13 +96,9 @@ sudo rm -rfv /opt/xahaud
 sudo rm -rfv /usr/local/bin/xahaud
 sudo rm -rfv /usr/local/bin/xahaud-install-update.sh
 
-read -p "pause"
-
 # Clean up logrotate
 sudo rm -rfv /etc/logrotate.d/nginx
 sudo rm -rfv /etc/logrotate.d/xahau-logs
-
-read -p "pause"
 
 # Remove and clean up certbot
 sudo certbot revoke --cert-path /etc/letsencrypt/live/$USER_DOMAIN/fullchain.pem --non-interactive
