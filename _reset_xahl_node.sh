@@ -63,8 +63,6 @@ sudo systemctl stop xahaud.service \
     && sudo rm -rfv /etc/systemd/system/xahaud.service
 sudo systemctl daemon-reload
 
-read -p "pause"
-
 # Remove and clean up landingpage
 sudo rm -fv $NGX_CONF_ENABLED/xahau
 sudo rm -fv $NGX_CONF_AVAIL/xahau
@@ -73,27 +71,23 @@ sudo rm -rfv /home/www
 read -p "pause"
 
 # Remove and clean up nginx
-rm -rfv /var/www
+sudo rm -rfv /var/www
 sudo apt --purge remove fontconfig-config fonts-dejavu-core libdeflate0 \
     libfontconfig1 libgd3 libjbig0 libjpeg-turbo8 libjpeg8 libnginx-mod-http-geoip2 \
     libnginx-mod-http-image-filter libnginx-mod-http-xslt-filter libnginx-mod-mail libnginx-mod-stream \
     libnginx-mod-stream-geoip2 libtiff5 libwebp7 libxpm4 nginx-common nginx-core -y
-
-read -p "pause"
 
 # Remove firewall rules
 sudo ufw delete allow $VARVAL_CHAIN_PEER/tcp
 sudo ufw delete allow 'Nginx Full'
 sudo ufw status verbose
 
-read -p "pause"
-
 # Remove and clean up xahaud
-if [ -z "$SCRIPT_DIR" ]; then
+if [ -z $SCRIPT_DIR ]; then
     echo -e "SCRIPT_DIR is not defined. Exiting before I nuke the home folder."
     exit 1
 else
-    sudo rm -rfv ~/"$SCRIPT_DIR"
+    sudo rm -rfv ~/$SCRIPT_DIR
 fi
 sudo userdel xahaud
 sudo rm -rfv /opt/xahaud
