@@ -246,13 +246,6 @@ FUNC_CERTBOT(){
     echo -e "${GREEN}## ${YELLOW}CertBot install and setup ...${NC}"
     echo
 
-    # # To allow for clean uninstall of certbot, save the current default to home folder
-    # if [ -z /etc/nginx/sites-available/default ]; then
-    #     echo -e "Skipping backup of default nginx conf file, not present."
-    # else
-    #     cp -v /etc/nginx/sites-available/default ~/default.nginx
-    # fi
-
     # Install Let's Encrypt Certbot
     sudo apt install certbot python3-certbot-nginx -y
 
@@ -401,6 +394,9 @@ FUNC_ALLOWLIST_CHECK(){
     sleep 2s
 }
 
+## cat <<EOF > /tmp/tmpxahau-logs
+## sudo sh -c 'cat /tmp/tmpxahau-logs > /etc/logrotate.d/xahau-logs'
+
 FUNC_INSTALL_LANDINGPAGE(){
     echo
     echo -e "${GREEN}#########################################################################${NC}"
@@ -414,10 +410,9 @@ FUNC_INSTALL_LANDINGPAGE(){
     fi
     if [ "$INSTALL_LANDINGPAGE" == "true" ]; then
         
-        mkdir -p /home/www
+        sudo mkdir -p /home/www
         echo "created /home/www directory for webfiles, and re-installing webpage"
-        rm -f /home/www/index.html
-        sudo cat <<EOF > /home/www/index.html
+        cat <<EOF > /tmp/tmpindex.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -510,11 +505,11 @@ FUNC_INSTALL_LANDINGPAGE(){
 </body>
 </html>
 EOF
+sudo sh -c 'cat /tmp/tmpindex.html > /home/www/index.html'
 
-        mkdir -p /home/www/error
+        sudo mkdir -p /home/www/error
         echo "created /home/www/error directory for blocked page, re-installing webpage"
-        rm -r /home/www/error/custom_403.html
-        sudo cat <<EOF > /home/www/error/custom_403.html
+        cat <<EOF > /tmp/tmpcustom_403.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -616,6 +611,7 @@ h1 {
 </body>
 </html>
 EOF
+sudo sh -c 'cat /tmp/tmpcustom_403.html > /home/www/error/custom_403.html'
 
     else
         echo -e "${GREEN}## ${YELLOW}Setup: Skipped re-installing Landng webpage install, due to vars file config... ${NC}"
@@ -629,10 +625,9 @@ EOF
     fi
     if [ "$INSTALL_TOML" == "true" ]; then
         
-        mkdir -p /home/www/.well-known
-        echo "created /home/www.well-known directory for .toml file, and re-creating default .toml file"
-        rm -f /home/www/.well-known/xahau.toml
-        sudo cat <<EOF > /home/www/.well-known/xahau.toml
+        sudo mkdir -p /home/www/.well-known
+        echo "created /home/www/well-known directory for .toml file, and re-creating default .toml file"
+        cat <<EOF > /tmp/tmpxahau.toml
 [[METADATA]]
 modified = $FDATE
 
@@ -649,6 +644,7 @@ discord = ""
 
 # End of file
 EOF
+sudo sh -c 'cat /tmp/tmpxahau.toml > /home/www/.well-known/xahau.toml'
 
     else
         echo -e "${GREEN}## ${YELLOW}Setup: Skipped re-installing default xahau.toml file, due to vars file config... ${NC}"
@@ -810,7 +806,7 @@ FUNC_NODE_DEPLOY(){
     fi
     if [ "$INSTALL_CERTBOT_SSL" == "true" ]; then
         FUNC_CERTBOT;
-        FUNC_EXIT;
+        #FUNC_EXIT;
     else
         echo -e "${GREEN}## ${YELLOW}Setup: Skipping CERTBOT install... ${NC}"
         echo
@@ -835,18 +831,19 @@ FUNC_NODE_DEPLOY(){
         sudo rm -f $NGX_CONF_AVAIL/default
     fi
 
-    if [  -f $NGX_CONF_ENABLED/xahau ]; then
-        sudo rm -f $NGX_CONF_ENABLED/xahau
-    fi 
-    if [  -f $NGX_CONF_AVAIL/xahau ]; then
-        sudo rm -f $NGX_CONF_AVAIL/xahau
-    fi
+    # if [  -f $NGX_CONF_ENABLED/xahau ]; then
+    #     sudo rm -f $NGX_CONF_ENABLED/xahau
+    # fi 
+    # if [  -f $NGX_CONF_AVAIL/xahau ]; then
+    #     sudo rm -f $NGX_CONF_AVAIL/xahau
+    # fi
      
-    sudo touch $NGX_CONF_AVAIL/xahau
-    sudo chmod 666 $NGX_CONF_AVAIL/xahau
+    # sudo touch $NGX_CONF_AVAIL/xahau
+    # sudo chmod 666 $NGX_CONF_AVAIL/xahau
     
     if [ "$INSTALL_CERTBOT_SSL" == "true" ]; then
-        sudo cat <<EOF > $NGX_CONF_AVAIL/xahau
+        cat <<EOF > /tmp/tmpxahau
+        #sudo cat <<EOF > $NGX_CONF_AVAIL/xahau
 server {
     listen 80;
     server_name $USER_DOMAIN;
@@ -915,10 +912,11 @@ server {
 
 }
 EOF
-    sudo chmod 644 $NGX_CONF_AVAIL
+sudo sh -c "cat /tmp/tmpxahau > $NGX_CONF_AVAIL/xahau"
+    #sudo chmod 644 $NGX_CONF_AVAIL
 
     else
-    sudo cat <<EOF > $NGX_CONF_AVAIL/xahau
+    cat <<EOF > /tmp/tmpxahau
 server {
     listen 80;
     server_name $USER_DOMAIN;
@@ -981,7 +979,8 @@ server {
 
 }
 EOF
-    sudo chmod 644 $NGX_CONF_AVAIL
+sudo sh -c "cat /tmp/tmpxahau > $NGX_CONF_AVAIL/xahau"
+    #sudo chmod 644 $NGX_CONF_AVAIL
     fi
 
     #check if symbolic link file exists in sites-enabled, if not create it
@@ -991,16 +990,16 @@ EOF
     
     # Start/Reload Nginx to apply all the new configuration
     # and enable it to start at boot
-    if sudo systemctl is-active --quiet nginx; then
+    if sudo systemctl is-active --quiet nginx.service; then
         # Nginx is running, so reload its configuration
-        sudo systemctl reload nginx
+        sudo systemctl reload nginx.service
         echo "Nginx reloaded."
     else
         # Nginx is not running, so start it
-        sudo systemctl start nginx
+        sudo systemctl start nginx.service
         echo "Nginx started."
     fi
-    sudo systemctl enable nginx
+    sudo systemctl enable nginx.service
 
     echo
     echo -e "${GREEN}#########################################################################${NC}"
