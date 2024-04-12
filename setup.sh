@@ -635,7 +635,7 @@ modified = $FDATE
 domain = "https://$USER_DOMAIN"
 type = "$XAHAU_NODE_SIZE"
 chain = "$VARVAL_CHAIN_NAME"
-install = "created by g140point6 & gadget78 Node Script"
+install = "Created by go140point6 & gadget78 (fork of original work by inv4fee2020 for XDC Networks.)"
 
 [[PRINCIPALS]]
 name = "evernode"
