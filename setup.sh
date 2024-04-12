@@ -665,7 +665,7 @@ FUNC_NODE_DEPLOY(){
     sleep 3s
 
     # installs updates, and default packages listed in vars file
-    #FUNC_PKG_CHECK;
+    FUNC_PKG_CHECK;
     #FUNC_EXIT;
 
     if [ "$VARVAL_CHAIN_NAME" != "mainnet" ] && [ "$VARVAL_CHAIN_NAME" != "testnet" ] && [ "$VARVAL_CHAIN_NAME" != "logrotate" ]; then
@@ -773,16 +773,16 @@ FUNC_NODE_DEPLOY(){
     
 
     # Xahau Node setup
-    #FUNC_CLONE_NODE_SETUP;
+    FUNC_CLONE_NODE_SETUP;
     #FUNC_EXIT;
 
     # Rotate logs on regular basis
-    #FUNC_LOGROTATE;
+    FUNC_LOGROTATE;
     #FUNC_EXIT;
 
     # Add/check AllowList
-    #FUNC_ALLOWLIST_CHECK;
-    #FUNC_EXIT;
+    FUNC_ALLOWLIST_CHECK;
+    FUNC_EXIT;
 
     # Prompt for user domains if not provided as a variable
     if [ -z "$USER_DOMAIN" ]; then
