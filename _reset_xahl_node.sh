@@ -46,12 +46,10 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 source $SCRIPT_DIR/xahl_node.vars
 
 if [ $VARVAL_CHAIN_NAME = "mainnet" ]; then
-    echo -e "mainnet"
     VARVAL_CHAIN_PEER="$XAHL_MAINNET_PEER"
 fi
 
 if [ $VARVAL_CHAIN_NAME = "testnet" ]; then
-    echo -e "testnet"
     VARVAL_CHAIN_PEER="$XAHL_TESTNET_PEER"
 fi
 

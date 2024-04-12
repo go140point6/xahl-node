@@ -709,7 +709,6 @@ FUNC_NODE_DEPLOY(){
 
     elif [ "$VARVAL_CHAIN_NAME" == "logrotate" ]; then
         FUNC_LOGROTATE
-        FUNC_EXIT
     fi
 
     VARVAL_NODE_NAME="xahl_node_$(hostname -s)"
