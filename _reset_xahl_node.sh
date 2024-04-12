@@ -111,9 +111,11 @@ read -p "pause"
 
 # Remove and clean up certbot
 sudo certbot revoke --cert-path /etc/letsencrypt/live/$USER_DOMAIN/fullchain.pem --non-interactive
-read -p "pause"
-sudo apt --purge remove certbot python3-certbot-nginx -y
-sudo apt autoremove -y
+sudo apt --purge remove certbot python3-certbot-nginx python3-acme python3-certbot python3-certifi \
+    python3-configargparse python3-icu python3-josepy python3-parsedatetime python3-requests \
+    python3-requests-toolbelt python3-rfc3339 python3-tz python3-urllib3 python3-zope.component \
+    python3-zope.event python3-zope.hookable -y
+sudo rm -rfv /var/log/letsencrypt
 
 echo
 echo
