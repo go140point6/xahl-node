@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# *** SETUP SOME VARIABLES THAT THIS SCRiPT NEEDS ***
+# *** SETUP SOME VARIABLES THAT THIS SCRIPT NEEDS ***
 
 # Get current user id and store as var
 USER_ID=$(getent passwd $EUID | cut -d: -f1)
@@ -25,7 +25,7 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 source $SCRIPT_DIR/xahl_node.vars
 
 #setup date
-FDATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+FDATE=$(date +"%Y-%m-%dT%H:%M:%S")
 
 
 FUNC_PKG_CHECK(){
@@ -665,6 +665,7 @@ FUNC_NODE_DEPLOY(){
 
     # installs updates, and default packages listed in vars file
     FUNC_PKG_CHECK;
+    FUNC_EXIT;
 
     if [ "$VARVAL_CHAIN_NAME" != "mainnet" ] && [ "$VARVAL_CHAIN_NAME" != "testnet" ] && [ "$VARVAL_CHAIN_NAME" != "logrotate" ]; then
         echo -e "${RED}VARVAL_CHAIN_NAME not set in $SCRIPT_DIR/xahl_node.vars"
@@ -817,22 +818,22 @@ FUNC_NODE_DEPLOY(){
     if [  -f $NGX_CONF_ENABLED/default ]; then
         sudo rm -f $NGX_CONF_ENABLED/default
     fi
-    if [  -f $NGX_CONF_NEW/default ]; then
-        sudo rm -f $NGX_CONF_NEW/default
+    if [  -f $NGX_CONF_AVAIL/default ]; then
+        sudo rm -f $NGX_CONF_AVAIL/default
     fi
 
     if [  -f $NGX_CONF_ENABLED/xahau ]; then
         sudo rm -f $NGX_CONF_ENABLED/xahau
     fi 
-    if [  -f $NGX_CONF_NEW/xahau ]; then
-        sudo rm -f $NGX_CONF_NEW/xahau
+    if [  -f $NGX_CONF_AVAIL/xahau ]; then
+        sudo rm -f $NGX_CONF_AVAIL/xahau
     fi
      
-    sudo touch $NGX_CONF_NEW/xahau
-    sudo chmod 666 $NGX_CONF_NEW/xahau
+    sudo touch $NGX_CONF_AVAIL/xahau
+    sudo chmod 666 $NGX_CONF_AVAIL/xahau
     
     if [ "$INSTALL_CERTBOT_SSL" == "true" ]; then
-        sudo cat <<EOF > $NGX_CONF_NEW/xahau
+        sudo cat <<EOF > $NGX_CONF_AVAIL/xahau
 server {
     listen 80;
     server_name $USER_DOMAIN;
@@ -901,10 +902,10 @@ server {
 
 }
 EOF
-    sudo chmod 644 $NGX_CONF_NEW
+    sudo chmod 644 $NGX_CONF_AVAIL
 
     else
-    sudo cat <<EOF > $NGX_CONF_NEW/xahau
+    sudo cat <<EOF > $NGX_CONF_AVAIL/xahau
 server {
     listen 80;
     server_name $USER_DOMAIN;
@@ -967,12 +968,12 @@ server {
 
 }
 EOF
-    sudo chmod 644 $NGX_CONF_NEW
+    sudo chmod 644 $NGX_CONF_AVAIL
     fi
 
     #check if symbolic link file exists in sites-enabled, if not create it
     if [ ! -f $NGX_CONF_ENABLED/xahau ]; then
-        sudo ln -s $NGX_CONF_NEW/xahau $NGX_CONF_ENABLED/xahau
+        sudo ln -s $NGX_CONF_AVAIL/xahau $NGX_CONF_ENABLED/xahau
     fi
     
     # Start/Reload Nginx to apply all the new configuration
