@@ -62,6 +62,7 @@ sudo systemctl stop nginx.service \
 sudo systemctl stop xahaud.service \
     && sudo systemctl disable xahaud.service \
     && sudo rm -rfv /etc/systemd/system/xahaud.service
+sudo systemctl daemon-reload
 
 read -p "pause"
 
@@ -89,9 +90,14 @@ sudo ufw status verbose
 read -p "pause"
 
 # Remove and clean up xahaud
-sudo rm -rfv ~/$SCRIPT_DIR
+if [ -z "$SCRIPT_DIR" ]; then
+    echo -e "SCRIPT_DIR is not defined. Exiting before I nuke the home folder."
+    exit 1
+else
+    sudo rm -rfv ~/"$SCRIPT_DIR"
+fi
+sudo userdel xahaud
 sudo rm -rfv /opt/xahaud
-sudo deluser xahaud
 
 read -p "pause"
 
