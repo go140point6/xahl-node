@@ -220,7 +220,8 @@ FUNC_ENABLE_UFW(){
     echo 
     # source: https://handyman.dulare.com/ufw-block-messages-in-syslog-how-to-get-rid-of-them/
     sudo sed -i -e 's/\#& stop/\& stop/g' /etc/rsyslog.d/20-ufw.conf
-    sudo cat /etc/rsyslog.d/20-ufw.conf | grep '& stop'
+    sudo cat /etc/rsyslog.d/20-ufw.conf | grep -s '& stop'
+    echo -e "Logging changed to ufw.log only."
 
     echo 
     echo 
@@ -749,7 +750,7 @@ FUNC_NODE_DEPLOY(){
         # Setup UFW
         FUNC_SETUP_UFW_PORTS;
         FUNC_ENABLE_UFW;
-        FUNC_EXIT;
+        #FUNC_EXIT;
     else
         echo
         echo -e "${GREEN}## ${YELLOW}UFW is not installed, checking config option... ${NC}"
@@ -766,13 +767,14 @@ FUNC_NODE_DEPLOY(){
             sudo apt install ufw
             FUNC_SETUP_UFW_PORTS;
             FUNC_ENABLE_UFW;
-            FUNC_EXIT;
+            #FUNC_EXIT;
         fi
     fi
     
 
     # Xahau Node setup
     FUNC_CLONE_NODE_SETUP;
+    FUNC_EXIT;
 
     # Rotate logs on regular basis
     FUNC_LOGROTATE;

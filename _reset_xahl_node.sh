@@ -56,7 +56,7 @@ fi
 # Stop nginx and xahaud processes, clean up
 sudo systemctl stop nginx.service \
     && sudo systemctl disable nginx.service \
-    && sudo rm -rfv /lib/systemd/system/nginx.service \
+    ## && sudo rm -rfv /lib/systemd/system/nginx.service \ # Cleaned up by apt remove?
     && sudo rm -rfv /run/nginx.pid \
     && sudo rm -rfv /usr/sbin/nginx
 sudo systemctl stop xahaud.service \
@@ -73,7 +73,11 @@ sudo rm -rfv /home/www
 read -p "pause"
 
 # Remove and clean up nginx
-sudo apt --purge remove nginx -y
+rm -rfv /var/www
+sudo apt --purge remove fontconfig-config fonts-dejavu-core libdeflate0 \
+    libfontconfig1 libgd3 libjbig0 libjpeg-turbo8 libjpeg8 libnginx-mod-http-geoip2 \
+    libnginx-mod-http-image-filter libnginx-mod-http-xslt-filter libnginx-mod-mail libnginx-mod-stream \
+    libnginx-mod-stream-geoip2 libtiff5 libwebp7 libxpm4 nginx-common nginx-core -y
 
 read -p "pause"
 
