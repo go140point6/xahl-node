@@ -106,7 +106,7 @@ sudo apt --purge remove certbot python3-certbot-nginx python3-acme python3-certb
     python3-configargparse python3-icu python3-josepy python3-parsedatetime python3-requests \
     python3-requests-toolbelt python3-rfc3339 python3-tz python3-urllib3 python3-zope.component \
     python3-zope.event python3-zope.hookable -y
-sudo mv -v ~/default.nginx /etc/nginx/sites-available/default
+#sudo mv -v ~/default.nginx /etc/nginx/sites-available/default
 sudo rm -rfv /var/log/letsencrypt
 
 echo
