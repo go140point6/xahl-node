@@ -68,8 +68,6 @@ sudo rm -fv $NGX_CONF_ENABLED/xahau
 sudo rm -fv $NGX_CONF_AVAIL/xahau
 sudo rm -rfv /home/www
 
-read -p "pause"
-
 # Remove and clean up nginx
 sudo rm -rfv /var/www
 sudo apt --purge remove fontconfig-config fonts-dejavu-core libdeflate0 \
@@ -83,6 +81,7 @@ sudo ufw delete allow 'Nginx Full'
 sudo ufw status verbose
 
 # Remove and clean up xahaud
+echo -e $SCRIPT_DIR
 if [ -z $SCRIPT_DIR ]; then
     echo -e "SCRIPT_DIR is not defined. Exiting before I nuke the home folder."
     exit 1
