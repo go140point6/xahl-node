@@ -250,7 +250,7 @@ FUNC_CERTBOT(){
     if [ -z /etc/nginx/sites-available/default ]; then
         echo -e "Skipping backup of default nginx conf file, not present."
     else
-        cp -v /etc/nginx/sites-available/default.nginx ~/
+        cp -v /etc/nginx/sites-available/default ~/default.nginx
     fi
 
     # Install Let's Encrypt Certbot
@@ -672,7 +672,7 @@ FUNC_NODE_DEPLOY(){
     sleep 3s
 
     # installs updates, and default packages listed in vars file
-    #FUNC_PKG_CHECK;
+    FUNC_PKG_CHECK;
     #FUNC_EXIT;
 
     if [ "$VARVAL_CHAIN_NAME" != "mainnet" ] && [ "$VARVAL_CHAIN_NAME" != "testnet" ] && [ "$VARVAL_CHAIN_NAME" != "logrotate" ]; then
@@ -755,8 +755,8 @@ FUNC_NODE_DEPLOY(){
         echo -e "${GREEN}UFW is ALREADY installed ${NC}"
         echo
         # Setup UFW
-        #FUNC_SETUP_UFW_PORTS;
-        #FUNC_ENABLE_UFW;
+        FUNC_SETUP_UFW_PORTS;
+        FUNC_ENABLE_UFW;
         #FUNC_EXIT;
     else
         echo
@@ -772,23 +772,23 @@ FUNC_NODE_DEPLOY(){
             echo -e "${GREEN}## ${YELLOW}Setup: Installing UFW... ${NC}"
             echo
             sudo apt install ufw
-            #FUNC_SETUP_UFW_PORTS;
-            #FUNC_ENABLE_UFW;
+            FUNC_SETUP_UFW_PORTS;
+            FUNC_ENABLE_UFW;
             #FUNC_EXIT;
         fi
     fi
     
 
     # Xahau Node setup
-    #FUNC_CLONE_NODE_SETUP;
+    FUNC_CLONE_NODE_SETUP;
     #FUNC_EXIT;
 
     # Rotate logs on regular basis
-    #FUNC_LOGROTATE;
+    FUNC_LOGROTATE;
     #FUNC_EXIT;
 
     # Add/check AllowList
-    #FUNC_ALLOWLIST_CHECK;
+    FUNC_ALLOWLIST_CHECK;
     #FUNC_EXIT;
 
     # Prompt for user domains if not provided as a variable
