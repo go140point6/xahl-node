@@ -98,6 +98,8 @@ else
 fi
 sudo userdel xahaud
 sudo rm -rfv /opt/xahaud
+sudo rm -rfv /usr/local/bin/xahaud
+sudo rm -rfv /usr/local/bin/xahaud-install-update.sh
 
 read -p "pause"
 

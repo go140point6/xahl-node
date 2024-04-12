@@ -774,10 +774,11 @@ FUNC_NODE_DEPLOY(){
 
     # Xahau Node setup
     FUNC_CLONE_NODE_SETUP;
-    FUNC_EXIT;
+    #FUNC_EXIT;
 
     # Rotate logs on regular basis
     FUNC_LOGROTATE;
+    FUNC_EXIT;
 
     # Add/check AllowList
     FUNC_ALLOWLIST_CHECK;
