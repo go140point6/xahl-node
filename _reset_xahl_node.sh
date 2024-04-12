@@ -110,7 +110,7 @@ sudo apt --purge remove certbot python3-certbot-nginx python3-acme python3-certb
 sudo rm -rfv /var/log/letsencrypt
 
 # Clean up tmp
-sudo rm -rfv /tmp/{tmpcustom_403.html, tmpindex.html, tmpxahau, tmpxahau-logs, tmpxahau.toml, xahlsudotmp }
+sudo rm -rfv /tmp/{tmpcustom_403.html,tmpindex.html,tmpxahau,tmpxahau-logs,tmpxahau.toml,xahlsudotmp}
 
 echo
 echo
