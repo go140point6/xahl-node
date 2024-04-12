@@ -45,12 +45,15 @@ sudo -l > /dev/null 2>&1
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 source $SCRIPT_DIR/xahl_node.vars
 
+
 if [ $VARVAL_CHAIN_NAME = "mainnet" ]; then
     VARVAL_CHAIN_PEER="$XAHL_MAINNET_PEER"
+    VARVAL_CHAIN_REPO="mainnet-docker"
 fi
 
 if [ $VARVAL_CHAIN_NAME = "testnet" ]; then
     VARVAL_CHAIN_PEER="$XAHL_TESTNET_PEER"
+    VARVAL_CHAIN_REPO="Xahau-Testnet-Docker"
 fi
 
 # Stop nginx and xahaud processes, clean up
@@ -81,12 +84,12 @@ sudo ufw delete allow 'Nginx Full'
 sudo ufw status verbose
 
 # Remove and clean up xahaud
-echo -e $SCRIPT_DIR
-if [ -z $SCRIPT_DIR ]; then
-    echo -e "SCRIPT_DIR is not defined. Exiting before I nuke the home folder."
+echo -e $VARVAL_CHAIN_REPO
+if [ -z $VARVAL_CHAIN_REPO ]; then
+    echo -e "VARVAL_CHAIN_REPO is not defined for some reason. Exiting before I nuke the home folder."
     exit 1
 else
-    sudo rm -rfv ~/$SCRIPT_DIR
+    sudo rm -rfv ~/$VARVAL_CHAIN_REPO
 fi
 sudo userdel xahaud
 sudo rm -rfv /opt/xahaud
