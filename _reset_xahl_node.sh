@@ -56,7 +56,6 @@ fi
 # Stop nginx and xahaud processes, clean up
 sudo systemctl stop nginx.service \
     && sudo systemctl disable nginx.service \
-    ## && sudo rm -rfv /lib/systemd/system/nginx.service \ # Cleaned up by apt remove?
     && sudo rm -rfv /run/nginx.pid \
     && sudo rm -rfv /usr/sbin/nginx
 sudo systemctl stop xahaud.service \
