@@ -664,8 +664,8 @@ FUNC_NODE_DEPLOY(){
     sleep 3s
 
     # installs updates, and default packages listed in vars file
-    FUNC_PKG_CHECK;
-    FUNC_EXIT;
+    #FUNC_PKG_CHECK;
+    #FUNC_EXIT;
 
     if [ "$VARVAL_CHAIN_NAME" != "mainnet" ] && [ "$VARVAL_CHAIN_NAME" != "testnet" ] && [ "$VARVAL_CHAIN_NAME" != "logrotate" ]; then
         echo -e "${RED}VARVAL_CHAIN_NAME not set in $SCRIPT_DIR/xahl_node.vars"
@@ -749,6 +749,7 @@ FUNC_NODE_DEPLOY(){
         # Setup UFW
         FUNC_SETUP_UFW_PORTS;
         FUNC_ENABLE_UFW;
+        FUNC_EXIT;
     else
         echo
         echo -e "${GREEN}## ${YELLOW}UFW is not installed, checking config option... ${NC}"
@@ -765,6 +766,7 @@ FUNC_NODE_DEPLOY(){
             sudo apt install ufw
             FUNC_SETUP_UFW_PORTS;
             FUNC_ENABLE_UFW;
+            FUNC_EXIT;
         fi
     fi
     
