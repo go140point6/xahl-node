@@ -246,6 +246,13 @@ FUNC_CERTBOT(){
     echo -e "${GREEN}## ${YELLOW}CertBot install and setup ...${NC}"
     echo
 
+    # To allow for clean uninstall of certbot, save the current default to home folder
+    if [ -z /etc/nginx/sites-available/default ]; then
+        echo -e "Skipping backup of default nginx conf file, not present."
+    else
+        cp -v /etc/nginx/sites-available/default.nginx ~/
+    fi
+
     # Install Let's Encrypt Certbot
     sudo apt install certbot python3-certbot-nginx -y
 
