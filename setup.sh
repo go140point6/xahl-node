@@ -1036,11 +1036,10 @@ sudo sh -c "cat /tmp/tmpxahau > $NGX_CONF_AVAIL/xahau"
 }
 
 
-
-
 FUNC_EXIT(){
-    # remove the sudo timeout for USER_ID
-    sudo sh -c 'rm -f /etc/sudoers.d/xahlnode_deploy'
+    # remove the sudo timeout for USER_ID and clean up temp
+    sudo sh -c 'rm -fv /etc/sudoers.d/xahlnode_deploy'
+    sudo sh -c 'rm -fv /tmp/{tmpcustom_403.html,tmpindex.html,tmpxahau,tmpxahau-logs,tmpxahau.toml,xahlsudotmp}'
     bash ~/.profile
     sudo -u $USER_ID sh -c 'bash ~/.profile'
 	exit 0
@@ -1050,5 +1049,6 @@ FUNC_EXIT(){
 FUNC_EXIT_ERROR(){
 	exit 1
 	}
+ 
   
 FUNC_NODE_DEPLOY
