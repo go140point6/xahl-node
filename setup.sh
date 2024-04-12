@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Check if the script is being run with elevated privileges
+if [ -n "$SUDO_USER" ]; then
+    echo "Please do not run this script with sudo. It will elevate privileges if necessary."
+    exit 1
+fi
+
 # *** SETUP SOME VARIABLES THAT THIS SCRIPT NEEDS ***
 
 # Get current user id and store as var
