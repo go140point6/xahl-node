@@ -49,7 +49,7 @@ To download the script(s) to your local node & install, read over the following 
 
 ## to UPDATE
 
-if you are updating from an older version, where the allow list was saved in `/etc/nginx/sites-available/xahau` then save them 1st with
+if you are updating from an older version, where the allow list was saved in `/etc/nginx/sites-available/xahau` you WILL need to save them FIRST with
 
         sudo nano /etc/nginx/sites-available/xahau
 
@@ -61,10 +61,9 @@ if you are updating from an older version, where the allow list was saved in `/e
         cd xahl-node
         chmod +x *.sh
 
-adjust default settings with the var file, see below, then start the install with 
+adjust default settings with the var file if needed (see "vars file" below) then start the install with;
 
-        ./setup.sh
-
+        sudo ./setup.sh
 
 
 ### Vars file _(xahl_node.vars)_
@@ -88,13 +87,13 @@ there are 3 size options tiny/medium/huge, `medium` is the default.
 
 there are other options in the vars file to, like; 
 
-you can choose to use/install certbot for a SSL via lets encrypt. useful if behind another instance of nginx/NginxProxyManager etc
+you can choose to opt out in installing and using certbot (SSL via lets encrypt), this is useful if install is behind another instance of nginx/NginxProxyManager etc
 
 ---
 
 ### Nginx related
 
-All the domain specific config is contained in the file `NGX_CONF_NEW`/`USER_DOMAIN` so a file named same as domain name (in the directory specified in the vars file)
+All the domain specific config is contained in the file `NGX_CONF_NEW`/xahau (this and `default` is deleted, and recreated when running the script)
 
 logs are held at /var/log/nginx/
 

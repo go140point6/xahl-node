@@ -1,16 +1,44 @@
 #!/bin/bash
 
-# *** SETUP SOME VARIABLES THAT THIS SCRiPT NEEDS ***
+# *** check and setup permissions ***
 
 # Get current user id and store as var
 USER_ID=$(getent passwd $EUID | cut -d: -f1)
 
 # Authenticate sudo perms before script execution to avoid timeouts or errors
-sudo -l > /dev/null 2>&1
+echo "checking privileges..."
+if sudo -l > /dev/null 2>&1; then
+    echo "privleges all good..."
+    echo "just going to extend the timeout period, so setup does not timeout while installing.."
+    echo
+    # extend sudo timeout for USER_ID to an hour, instead of default 5min
+    echo "Defaults:$USER_ID timestamp_timeout=120" > /tmp/xahlsudotmp
+    # add visudo check ? 
+    sudo sh -c 'cat /tmp/xahlsudotmp > /etc/sudoers.d/xahlnode_deploy'
 
-# Set the sudo timeout for USER_ID to expire on reboot instead of default 5mins
-echo "Defaults:$USER_ID timestamp_timeout=-1" > /tmp/xahlsudotmp
-sudo sh -c 'cat /tmp/xahlsudotmp > /etc/sudoers.d/xahlnode_deploy'
+else
+    echo
+    echo "this user ($USER_ID) does not have full sudo privilages, going to try root user..."
+    if su -c "./setup.sh" root; then
+        echo "script executed successfully."
+    else
+        echo 
+        echo "Failed to execute the script with "root" user ID."
+
+        # Prompt the user to enter a different user ID
+        read -p "Enter a user ID that has full sudo privledges :" USER_ID
+
+        # Attempt to run the command with the specified user ID
+        if su -c "./setup.sh" $USER_ID; then
+            echo "script executed successfully with user ID: $USER_ID."
+        else
+            echo "$USSER_ID also failed to run this setup script. Please re run, and try a different user ID."
+        fi
+    fi
+fi
+
+
+# *** SETUP SOME VARIABLES THAT THIS SCRiPT NEEDS ***
 
 # Set Colour Vars
 GREEN='\033[0;32m'
@@ -69,16 +97,16 @@ FUNC_CLONE_NODE_SETUP(){
     echo
     echo -e "${GREEN}#########################################################################${NC}"
     echo
-    echo -e "${GREEN}## ${YELLOW}Starting Xahau Node install ...${NC}"
+    echo -e "${GREEN}## ${YELLOW}Starting Xahau Node install... ${NC}"
     echo
     echo -e "Cloning repo https://github.com/Xahau/$VARVAL_CHAIN_REPO' ${NC}"
     
-    cd ~/
+    cd $SCRIPT_DIR
     if [ ! -d "$VARVAL_CHAIN_REPO" ]; then
-        echo "The directory '$VARVAL_CHAIN_REPO' does not exist."
+        echo "Creating directory '$SCRIPT_DIR/$VARVAL_CHAIN_REPO' to use for xahaud instalilation..."
         git clone https://github.com/Xahau/$VARVAL_CHAIN_REPO
     else
-        echo "The directory '$VARVAL_CHAIN_REPO' exists, no need to re-create.."
+        echo "directory '$SCRIPT_DIR/$VARVAL_CHAIN_REPO' exists, no need to re-create, updateing..."
     fi
 
     cd $VARVAL_CHAIN_REPO
@@ -433,7 +461,7 @@ FUNC_INSTALL_LANDINGPAGE(){
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     }
 
-    .container {
+    .serverinfo {
         max-width: 300px;
         margin: 0 auto;
         margin-bottom: 20px;
@@ -443,7 +471,7 @@ FUNC_INSTALL_LANDINGPAGE(){
         text-align: left; /* Align content to the left */
     }
 
-    #serverInfo {
+    #rawoutput {
         background-color: #1a1a1a;
         padding: 20px;
         border-radius: 10px;
@@ -461,16 +489,23 @@ FUNC_INSTALL_LANDINGPAGE(){
 <body>
     <h1>Xahau Node Landing Page</h1>
 
-    <div class="container">
+    <div class="serverinfo">
         <h1>Server Info</h1>
         <p>Status: <span id="status"></span></p>
+        <p>ServerStatus: <span id="serverstatus"></span></p>
         <p>Build Version: <span id="buildVersion"></span></p>
+        <p>Connected Websockets: <span id="connections"></span></p>
+        <p>Connected peers: <span id="peers"></span></p>
         <p>Current Ledger: <span id="currentLedger"></span></p>
         <p>Complete Ledgers: <span id="completeLedgers"></span></p>
+        <p>Node Size: <span id="nodeSize"></span></p>
+        <p>UpTime: <span id="uptime"></span></p>
         <p>Last Refresh: <span id="time"></span></p>
     </div>
 
-    <pre id="serverInfo"></pre>
+    <pre id="rawoutput"><h1>Raw .toml file</h1><span id="rawTOML"></spam></pre>
+
+    <pre id="rawoutput"><h1>xahaud server_info</h1><span id="serverInfo"></spam></pre>
 
     <script>
         const dataToSend = {"method":"server_info"};
@@ -491,6 +526,12 @@ FUNC_INSTALL_LANDINGPAGE(){
                 document.getElementById('buildVersion').textContent = serverInfo.result.info.build_version;
                 document.getElementById('currentLedger').textContent = serverInfo.result.info.validated_ledger.seq;
                 document.getElementById('completeLedgers').textContent = serverInfo.result.info.complete_ledgers;
+                const uptimeInSeconds = serverInfo.result.info.uptime;
+                const days = Math.floor(uptimeInSeconds / 86400);
+                const hours = Math.floor((uptimeInSeconds % 86400) / 3600);
+                const minutes = Math.floor((uptimeInSeconds % 3600) / 60);
+                const formattedUptime = `${days} Days, ${hours.toString().padStart(2, '0')} Hours, and ${minutes.toString().padStart(2, '0')} Mins`;
+                document.getElementById('uptime').textContent = formattedUptime;
                 document.getElementById('time').textContent = serverInfo.result.info.time;
             })
             .catch(error => {
@@ -530,7 +571,7 @@ h1 {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-.container {
+.serverinfo {
     max-width: 300px;
     margin: 0 auto;
     margin-bottom: 20px;
@@ -540,7 +581,7 @@ h1 {
     text-align: left; /* Align content to the left */
 }
 
-#serverInfo {
+#rawoutput {
     background-color: #1a1a1a;
     padding: 20px;
     border-radius: 10px;
@@ -559,26 +600,64 @@ h1 {
 <body>
     <h1>Xahau Node Landing Page</h1>
 
-    <div class="container">
+    <div class="serverinfo">
         <h1>Server Info</h1>
-        <p><span style="color: red;">THIS SERVER IS BLOCKING YOUR IP</span></p>
-        <p>Contact Email: $CERT_EMAIL</p>
+        <p><span style="color: orange;">THIS SERVER IS BLOCKING YOUR IP</span></p>
+        <p>Contact Email: gadget78@zerp.network</p>
         <p>YourIP: <span id="realip"></p>
         <p>X-Real-IP: <span id="xrealip"></p>
         <p>-</p>
 
-        <p>Status: </p>
-        <p>Build Version: </p>
-        <p>Current Ledger: </p>
-        <p>Complete Ledgers: </span></p>
-        <p>Last Refresh: </span></p>
+        <p>Status: <span id="status"></span></p>
+        <p>Build Version: <span id="buildVersion"></span></p>
+        <p>Connections: <span id="connections"></span></p>
+        <p>Connected Peers: <span id="peers"></span></p>
+        <p>Current Ledger: <span id="currentLedger"></span></p>
+        <p>Complete Ledgers: <span id="completedLedgers"></span></p>
+        <p>Node Size: <span id="nodeSize"></span></p>
+        <p>UpTime: <span id="uptime"></span></p>
+        <p>Last Refresh: <span id="time"></span></p>
     </div>
 
-    <pre id="serverInfo"></pre>
+    <pre id="rawoutput"><h1>Raw .toml file</h1><span id="rawTOML"></spam></pre>
 
     <script>
+        function parseTOML(tomlString) {
+          const json = {};
+          let currentSection = json;
+
+          tomlString.split("\n").forEach((line) => {
+            line = line.split("#")[0].trim();
+            if (!line) return;
+
+            if (line.startsWith("[")) {
+              const section = line.replace(/[\[\]]/g, "");
+              json[section] = {};
+              currentSection = json[section];
+            } else {
+              const [key, value] = line.split("=").map((s) => s.trim());
+              currentSection[key] = parseValue(value);
+            }
+          });
+
+          return json;
+        }
+
+        function parseValue(value) {
+          if (value.startsWith('"') && value.endsWith('"')) {
+            return value.slice(1, -1);
+          }
+          if (value === "true" || value === "false") {
+            return value === "true";
+          }
+          if (!isNaN(value)) {
+            return parseFloat(value);
+          }
+          return value;
+        }
+
         const dataToSend = {"method":"server_info"};
-        fetch('https://$USER_DOMAIN', {
+        fetch('https://127.0.0.1', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -603,6 +682,30 @@ h1 {
             console.error('Error fetching client IP:', error);
             document.getElementById('realip').textContent = "unknown";
         });
+        fetch('.well-known/xahau.toml')
+        .then(response  => response.text())
+        .then(toml => {
+            return {
+              toml: toml,
+              serverInfo: parseTOML(toml)
+            };
+        })
+        .then(({toml, serverInfo}) => {
+            console.log(serverInfo)
+            document.getElementById('rawTOML').textContent = toml;
+            document.getElementById('status').textContent = serverInfo.STATUS.STATUS;
+            document.getElementById('buildVersion').textContent = serverInfo.STATUS.BUILDVERSION;
+            document.getElementById('connections').textContent = serverInfo.STATUS.CONNECTIONS;
+            document.getElementById('peers').textContent = serverInfo.STATUS.PEERS;
+            document.getElementById('currentLedger').textContent = serverInfo.STATUS.CURRENTLEDGER;
+            document.getElementById('completedLedgers').textContent = serverInfo.STATUS.LEDGERS;
+            document.getElementById('nodeSize').textContent = serverInfo.STATUS.NODESIZE;
+            document.getElementById('uptime').textContent = serverInfo.STATUS.UPTIME;
+            document.getElementById('time').textContent = serverInfo.STATUS.LASTREFRESH;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
     </script>
 
 </body>
@@ -626,18 +729,25 @@ EOF
         rm -f /home/www/.well-known/xahau.toml
         sudo cat <<EOF > /home/www/.well-known/xahau.toml
 [[METADATA]]
+created = $FDATE
 modified = $FDATE
-
-[[SERVERS]]
-domain = "https://$USER_DOMAIN"
-type = "$XAHAU_NODE_SIZE"
-chain = "$VARVAL_CHAIN_NAME"
-install = "created by g140point6 & gadget78 Node Script"
 
 [[PRINCIPALS]]
 name = "evernode"
 email = "$CERT_EMAIL"
 discord = ""
+
+[[ORGANIZATION]]
+
+[[SERVERS]]
+domain = "https://$USER_DOMAIN"
+install = "created by g140point6 & gadget78 Node Script"
+
+[[STATUS]]
+NETWORK = "$VARVAL_CHAIN_NAME"
+NODESIZE = "$XAHAU_NODE_SIZE"
+
+[[AMENDMENTS]]
 
 # End of file
 EOF
@@ -901,7 +1011,6 @@ server {
 
 }
 EOF
-    sudo chmod 644 $NGX_CONF_NEW
 
     else
     sudo cat <<EOF > $NGX_CONF_NEW/xahau
