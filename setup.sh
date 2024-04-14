@@ -37,7 +37,7 @@ else
             exit
         else
             echo
-            echo "$USSER_ID re-run script with correct sudo priveledges..."
+            echo "$USER_ID re-run script with correct sudo priveledges..."
             echo
             exit
         fi
@@ -53,6 +53,7 @@ GREEN='\033[0;32m'
 RED='\033[0;91m'  # Intense Red
 YELLOW='\033[0;33m'
 BYELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Get the absolute path of the script directory
@@ -165,7 +166,7 @@ FUNC_CLONE_NODE_SETUP(){
     echo -e "Updating node size in .cfg file  ...${NC}"
     echo
     if [ "$XAHAU_NODE_SIZE" != "tiny" ] && [ "$XAHAU_NODE_SIZE" != "medium" ] && [ "$XAHAU_NODE_SIZE" != "huge" ]; then
-        echo -e "${RED}XAHAU_NODE_SIZE not set in $SCRIPT_DIR/xahl_node.vars file. =$XAHAU_NODE_SIZE"
+        echo -e "${BLUE}XAHAU_NODE_SIZE not set in $SCRIPT_DIR/xahl_node.vars file. =$XAHAU_NODE_SIZE ${NC}"
         echo "Please choose an option:"
         echo "1. tiny = less than 8G-RAM, 50GB-HDD"
         echo "2. medium = 8-16G RAM, 250GBB-HDD"
@@ -442,8 +443,11 @@ FUNC_INSTALL_LANDINGPAGE(){
     if [ "$INSTALL_LANDINGPAGE" == "true" ]; then
         
         mkdir -p /home/www
-        echo "created /home/www directory for webfiles, and re-installing webpage"
-        rm -f /home/www/index.html
+        echo "created /home/www directory for webfiles, now re-installing webpage"
+
+        if [  -f /home/www/index.html ]; then
+            sudo rm -f /home/www/index.html
+        fi
         sudo cat <<EOF > /home/www/index.html
 <!DOCTYPE html>
 <html lang="en">
@@ -537,7 +541,7 @@ FUNC_INSTALL_LANDINGPAGE(){
                 const days = Math.floor(uptimeInSeconds / 86400);
                 const hours = Math.floor((uptimeInSeconds % 86400) / 3600);
                 const minutes = Math.floor((uptimeInSeconds % 3600) / 60);
-                const formattedUptime = `${days} Days, ${hours.toString().padStart(2, '0')} Hours, and ${minutes.toString().padStart(2, '0')} Mins`;
+                const formattedUptime = `\${days} Days, \${hours.toString().padStart(2, '0')} Hours, and \${minutes.toString().padStart(2, '0')} Mins`;
                 document.getElementById('uptime').textContent = formattedUptime;
                 document.getElementById('time').textContent = serverInfo.result.info.time;
             })
@@ -553,7 +557,9 @@ EOF
 
         mkdir -p /home/www/error
         echo "created /home/www/error directory for blocked page, re-installing webpage"
-        rm -r /home/www/error/custom_403.html
+        if [  -f /home/www/error/custom_403.html ]; then
+            sudo rm -r /home/www/error/custom_403.html
+        fi        
         sudo cat <<EOF > /home/www/error/custom_403.html
 <!DOCTYPE html>
 <html lang="en">
@@ -1133,6 +1139,7 @@ EOF
     echo
     echo -e "use file ${BYELLOW}'$SCRIPT_DIR/$NGINX_ALLOWLIST_FILE'${NC} to add/remove IP addresses you want to allow access to your node${NC}"
     echo -e "once file is edited and saved, run command ${BYELLOW}sudo nginx -s reload${NC} to apply new settings ${NC}"
+    echo -e "you can also use this to check the setting, if the website is not displaying correctly"
     echo
     echo -e "${NC}you can use command ${YELLOW}xahaud server_info${NC} to get info direct from the server"
     echo

@@ -100,9 +100,9 @@ logs are held at /var/log/nginx/
 
 and Although this works best as a dedicated host with no other nginx/proxy instances,
 
-it can work behind another instance, you may need to adjust the setting in the main nginx.conf file to suit your enviroment, mainly so the allow list works correctly.
+it can work behind another instance, you may need to adjust the setting in the main nginx.conf file to suit your enviroment, mainly so the enabled the allowlist to work correctly.
 
-for example, in nginx.conf you may need to adjust/add `set_real_ip_from 172.16.0.0/12;` for you proxy IP etc
+for example, in nginx.conf you may need to adjust/add `set_real_ip_from 172.16.0.0/12;` with the IP set to you exsisting proxy IP etc
 
 
 # Node IP Permissions
