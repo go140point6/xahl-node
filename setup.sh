@@ -20,19 +20,26 @@ else
     echo
     echo "this user ($USER_ID) does not have full sudo privilages, going to try root user..."
     if su -c "./setup.sh" root; then
-        echo "script executed successfully."
+        exit
     else
-        echo 
-        echo "Failed to execute the script with "root" user ID."
-
+        if [ $? -eq 1 ]; then
+          echo
+          echo "Incorrect password for root user."
+        else
+          echo 
+          echo "Failed to execute the script with "root" user ID."
+        fi
         # Prompt the user to enter a different user ID
         read -p "Enter a user ID that has full sudo privledges :" USER_ID
 
         # Attempt to run the command with the specified user ID
         if su -c "./setup.sh" $USER_ID; then
-            echo "script executed successfully with user ID: $USER_ID."
+            exit
         else
-            echo "$USSER_ID also failed to run this setup script. Please re run, and try a different user ID."
+            echo
+            echo "$USSER_ID re-run script with correct sudo priveledges..."
+            echo
+            exit
         fi
     fi
 fi
@@ -724,9 +731,20 @@ EOF
     fi
     if [ "$INSTALL_TOML" == "true" ]; then
         
-        mkdir -p /home/www/.well-known
+        # Prompt for user email if not provided as a variable
+        if [ -z "$TOML_EMAIL" ]; then
+            echo
+            read -p "Enter your email address for the PUBLIC .toml file: " TOML_EMAIL
+            sed -i "s/^TOML_EMAIL=.*/TOML_EMAIL=\"$TOML_EMAIL\"/" $SCRIPT_DIR/xahl_node.vars
+            echo
+        fi
+
+
+
+
+        sudo mkdir -p /home/www/.well-known
         echo "created /home/www.well-known directory for .toml file, and re-creating default .toml file"
-        rm -f /home/www/.well-known/xahau.toml
+        sudo rm -f /home/www/.well-known/xahau.toml
         sudo cat <<EOF > /home/www/.well-known/xahau.toml
 [[METADATA]]
 created = $FDATE
@@ -734,10 +752,11 @@ modified = $FDATE
 
 [[PRINCIPALS]]
 name = "evernode"
-email = "$CERT_EMAIL"
+email = "$TOML_EMAIL"
 discord = ""
 
 [[ORGANIZATION]]
+website = "https://$USER_DOMAIN"
 
 [[SERVERS]]
 domain = "https://$USER_DOMAIN"
@@ -1127,6 +1146,16 @@ EOF
 
 
 
+
+# setup a clean exit
+trap SIGINT_EXIT SIGINT
+SIGINT_EXIT(){
+    stty sane
+    echo
+    echo "exiting before completing the script."
+    exit 1
+
+}
 
 FUNC_EXIT(){
     # remove the sudo timeout for USER_ID

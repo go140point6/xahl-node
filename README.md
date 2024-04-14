@@ -55,9 +55,10 @@ if you are updating from an older version, where the allow list was saved in `/e
 
 ## Clone the repo, and prep for starting
 
-        cd /root
+whatever folder you git clone to, is the place it will use to clone the xahaud image, and where the nginx allowlist will be;
+
         apt install git
-        git clone https://github.com/go140point6/xahl-node
+        git clone https://github.com/gadget78/xahl-node
         cd xahl-node
         chmod +x *.sh
 
@@ -72,7 +73,7 @@ The vars file allows you to manually update variables which helps to avoid inter
 
 - `USER_DOMAIN` - your server domain.
 - `CERT_EMAIL` - email address for certificate renewals etc.
-- `XAHAU_NODE_SIZE` - allows you to state a "size" of the node, which change the amount of RAM, and HDD thats used.
+- `XAHAU_NODE_SIZE` - allows you to state the "size" of the node, this will change the amount of RAM, and HDD thats used.
 
 The file also controls the default packages that are installed on the node;
 
