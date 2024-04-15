@@ -58,7 +58,7 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 source $SCRIPT_DIR/xahl_node.vars
 
 # Setup date (local time)
-FDATE=$(date +"%Y-%m-%dT%H:%M:%S")
+FDATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 
 FUNC_PKG_CHECK(){
@@ -335,8 +335,9 @@ FUNC_LOGROTATE(){
         done
 
     fi
-        #cat <<EOF > /tmp/tmpxahau-logs
-        sudo cat <<EOF > /etc/logrotate.d/xahau-logs
+
+    TMP_FILE02=$(mktemp)
+    cat <<EOF > $TMP_FILE02
 /opt/xahaud/log/*.log
         {
             su $USER_ID $USER_ID
@@ -355,7 +356,7 @@ FUNC_LOGROTATE(){
         }    
 EOF
 
-    #sudo sh -c 'cat /tmp/tmpxahau-logs > /etc/logrotate.d/xahau-logs'
+    sudo sh -c "cat $TMP_FILE02 > /etc/logrotate.d/xahau-logs"
 
 }
 
@@ -427,8 +428,6 @@ FUNC_ALLOWLIST_CHECK(){
     sleep 2s
 }
 
-## cat <<EOF > /tmp/tmpxahau-logs
-## sudo sh -c 'cat /tmp/tmpxahau-logs > /etc/logrotate.d/xahau-logs'
 
 FUNC_INSTALL_LANDINGPAGE(){
     echo
@@ -445,7 +444,10 @@ FUNC_INSTALL_LANDINGPAGE(){
         
         sudo mkdir -p /home/www
         echo "created /home/www directory for webfiles, and re-installing webpage"
-        cat <<EOF > /tmp/tmpindex.html
+
+    
+        TMP_FILE03=$(mktemp)
+        cat <<EOF > $TMP_FILE03
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -538,11 +540,12 @@ FUNC_INSTALL_LANDINGPAGE(){
 </body>
 </html>
 EOF
-sudo sh -c 'cat /tmp/tmpindex.html > /home/www/index.html'
+sudo sh -c "cat $TMP_FILE03 > /home/www/index.html"
 
         sudo mkdir -p /home/www/error
         echo "created /home/www/error directory for blocked page, re-installing webpage"
-        cat <<EOF > /tmp/tmpcustom_403.html
+        TMP_FILE04=$(mktemp)
+        cat <<EOF > $TMP_FILE04
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -644,8 +647,7 @@ h1 {
 </body>
 </html>
 EOF
-sudo sh -c 'cat /tmp/tmpcustom_403.html > /home/www/error/custom_403.html'
-
+sudo sh -c "cat $TMP_FILE04 > /home/www/error/custom_403.html"
     else
         echo -e "${GREEN}## ${YELLOW}Setup: Skipped re-installing Landng webpage install, due to vars file config... ${NC}"
         echo
@@ -660,7 +662,8 @@ sudo sh -c 'cat /tmp/tmpcustom_403.html > /home/www/error/custom_403.html'
         
         sudo mkdir -p /home/www/.well-known
         echo "created /home/www/well-known directory for .toml file, and re-creating default .toml file"
-        cat <<EOF > /tmp/tmpxahau.toml
+        TMP_FILE05=$(mktemp)
+        cat <<EOF > $TMP_FILE05
 [[METADATA]]
 modified = $FDATE
 
@@ -677,7 +680,7 @@ discord = ""
 
 # End of file
 EOF
-sudo sh -c 'cat /tmp/tmpxahau.toml > /home/www/.well-known/xahau.toml'
+sudo sh -c "cat $TMP_FILE05 > /home/www/.well-known/xahau.toml"
 
     else
         echo -e "${GREEN}## ${YELLOW}Setup: Skipped re-installing default xahau.toml file, due to vars file config... ${NC}"
@@ -875,8 +878,9 @@ FUNC_NODE_DEPLOY(){
     # sudo chmod 666 $NGX_CONF_AVAIL/xahau
     
     if [ "$INSTALL_CERTBOT_SSL" == "true" ]; then
-        cat <<EOF > /tmp/tmpxahau
         #sudo cat <<EOF > $NGX_CONF_AVAIL/xahau
+        TMP_FILE06=$(mktemp)
+        cat <<EOF > $TMP_FILE06
 server {
     listen 80;
     server_name $USER_DOMAIN;
@@ -945,11 +949,12 @@ server {
 
 }
 EOF
-sudo sh -c "cat /tmp/tmpxahau > $NGX_CONF_AVAIL/xahau"
+sudo sh -c "cat $TMP_FILE06 > $NGX_CONF_AVAIL/xahau"
     #sudo chmod 644 $NGX_CONF_AVAIL
 
     else
-    cat <<EOF > /tmp/tmpxahau
+        TMP_FILE06=$(mktemp)
+        cat <<EOF > $TMP_FILE06
 server {
     listen 80;
     server_name $USER_DOMAIN;
@@ -1012,7 +1017,7 @@ server {
 
 }
 EOF
-sudo sh -c "cat /tmp/tmpxahau > $NGX_CONF_AVAIL/xahau"
+sudo sh -c "cat $TMP_FILE06 > $NGX_CONF_AVAIL/xahau"
     #sudo chmod 644 $NGX_CONF_AVAIL
     fi
 
@@ -1065,8 +1070,8 @@ sudo sh -c "cat /tmp/tmpxahau > $NGX_CONF_AVAIL/xahau"
 
 FUNC_EXIT(){
     # remove the sudo timeout for USER_ID and clean up temp
-    sudo rm -rfv /tmp/{tmpcustom_403.html,tmpindex.html,tmpxahau,tmpxahau-logs,tmpxahau.toml,xahlsudotmp}
-    sudo sh -c 'rm -fv /etc/sudoers.d/xahlnode_deploy'
+    #sudo rm -rfv /tmp/{tmpcustom_403.html,tmpindex.html,tmpxahau,tmpxahau-logs,tmpxahau.toml,xahlsudotmp}
+    sudo sh -c "rm -fv /etc/sudoers.d/$TMP_FILENAME01"
     bash ~/.profile
     sudo -u $USER_ID sh -c 'bash ~/.profile'
 	exit 0
