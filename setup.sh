@@ -9,7 +9,7 @@ if [ -n "$1" ] && id "$1" &>/dev/null; then
     ORIGINAL_USER_ID=$1
     echo "$USER_ID now running script for $ORIGINAL_USER_ID"
     echo
-
+fi
 
 # Authenticate sudo perms before script execution to avoid timeouts or errors
 echo "checking privileges..."
@@ -1145,6 +1145,7 @@ EOF
     if $ORIGINAL_USER_ID; then 
       echo -e "${GREEN}## ${YELLOW}Setup: just applying corrective ownership... ${NC}"
       sudo chown -R $ORIGINAL_USER_ID:users $SCRIPT_DIR
+    fi
     echo
     echo -e "${GREEN}#########################################################################${NC}"
     echo
@@ -1178,8 +1179,7 @@ SIGINT_EXIT(){
     echo
     echo "exiting before completing the script."
     exit 1
-
-}
+    }
 
 FUNC_EXIT(){
     # remove the sudo timeout for USER_ID
