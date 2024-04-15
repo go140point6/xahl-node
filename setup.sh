@@ -106,7 +106,7 @@ FUNC_CLONE_NODE_SETUP(){
     echo
     echo -e "Cloning repo https://github.com/Xahau/$VARVAL_CHAIN_REPO' ${NC}"
     
-    cd ~/
+    cd $SCRIPT_DIR
     if [ ! -d "$VARVAL_CHAIN_REPO" ]; then
         echo "The directory '$VARVAL_CHAIN_REPO' does not exist."
         git clone https://github.com/Xahau/$VARVAL_CHAIN_REPO
