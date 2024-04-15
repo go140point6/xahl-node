@@ -1143,7 +1143,7 @@ EOF
     echo -e "${GREEN}## ${YELLOW}Setup: removed old files, and Created and enabled a new Nginx configuration files${NC}"
     echo
     if $ORIGINAL_USER_ID; then 
-      echo -e "${GREEN}## ${YELLOW}Setup: just applying corrective ownership... ${NC}
+      echo -e "${GREEN}## ${YELLOW}Setup: just applying corrective ownership... ${NC}"
       sudo chown -R $ORIGINAL_USER_ID:users $SCRIPT_DIR
     echo
     echo -e "${GREEN}#########################################################################${NC}"
