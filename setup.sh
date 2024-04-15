@@ -5,11 +5,17 @@
 # Get current user id and store as var
 USER_ID=$(getent passwd $EUID | cut -d: -f1)
 
+if [ -n "$1" ] && id "$1" &>/dev/null; then 
+    ORIGINAL_USER_ID=$1
+    echo "$USER_ID now running script for $ORIGINAL_USER_ID"
+    echo
+
+
 # Authenticate sudo perms before script execution to avoid timeouts or errors
 echo "checking privileges..."
 if sudo -l > /dev/null 2>&1; then
     echo "privleges all good..."
-    echo "just going to extend the timeout period, so setup does not timeout while installing.."
+    echo "just going to extend the timeout period, so sudo privleges do not timeout while installing.."
     echo
     # extend sudo timeout for USER_ID to an hour, instead of default 5min
     echo "Defaults:$USER_ID timestamp_timeout=120" > /tmp/xahlsudotmp
@@ -19,7 +25,7 @@ if sudo -l > /dev/null 2>&1; then
 else
     echo
     echo "this user ($USER_ID) does not have full sudo privilages, going to try root user..."
-    if su -c "./setup.sh" root; then
+    if su -c "./setup.sh $USER_ID" root; then
         exit
     else
         if [ $? -eq 1 ]; then
@@ -30,10 +36,10 @@ else
           echo "Failed to execute the script with "root" user ID."
         fi
         # Prompt the user to enter a different user ID
-        read -p "Enter a user ID that has full sudo privledges :" USER_ID
+        read -p "${BLUE}Enter a user ID that has full sudo privledges :${NC}" SUDO_ID
 
         # Attempt to run the command with the specified user ID
-        if su -c "./setup.sh" $USER_ID; then
+        if su -c "./setup.sh $USER_ID" $SUDO_ID; then
             exit
         else
             echo
@@ -53,12 +59,15 @@ GREEN='\033[0;32m'
 RED='\033[0;91m'  # Intense Red
 YELLOW='\033[0;33m'
 BYELLOW='\033[1;33m'
-BLUE='\033[0;34m'
+BLUE='\033[0;94m'
 NC='\033[0m' # No Color
 
 # Get the absolute path of the script directory
+# and import variables
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 source $SCRIPT_DIR/xahl_node.vars
+touch $SCRIPT_DIR/.env
+source $SCRIPT_DIR/.env
 
 #setup date
 FDATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -73,7 +82,7 @@ FUNC_PKG_CHECK(){
 
     # update and upgrade the system
     if [ -z "$INSTALL_UPDATES" ]; then
-        read -p "do you want to check, and install OS updates? Enter true or false: " INSTALL_UPDATES
+        read -p "${BLUE}do you want to check, and install OS updates? Enter true or false: ${NC}" INSTALL_UPDATES
         sed -i "s/^INSTALL_UPDATES=.*/INSTALL_UPDATES=\"$INSTALL_UPDATES\"/" $SCRIPT_DIR/xahl_node.vars
     fi
     if [ "$INSTALL_UPDATES" == "true" ]; then
@@ -114,7 +123,7 @@ FUNC_CLONE_NODE_SETUP(){
         echo "Creating directory '$SCRIPT_DIR/$VARVAL_CHAIN_REPO' to use for xahaud instalilation..."
         git clone https://github.com/Xahau/$VARVAL_CHAIN_REPO
     else
-        echo "directory '$SCRIPT_DIR/$VARVAL_CHAIN_REPO' exists, no need to re-create, updateing..."
+        echo "directory '$SCRIPT_DIR/$VARVAL_CHAIN_REPO' exists, no need to re-create, updating instead..."
     fi
 
     cd $VARVAL_CHAIN_REPO
@@ -166,11 +175,11 @@ FUNC_CLONE_NODE_SETUP(){
     echo -e "Updating node size in .cfg file  ...${NC}"
     echo
     if [ "$XAHAU_NODE_SIZE" != "tiny" ] && [ "$XAHAU_NODE_SIZE" != "medium" ] && [ "$XAHAU_NODE_SIZE" != "huge" ]; then
-        echo -e "${BLUE}XAHAU_NODE_SIZE not set in $SCRIPT_DIR/xahl_node.vars file. =$XAHAU_NODE_SIZE ${NC}"
+        echo -e "${BLUE}XAHAU_NODE_SIZE not set in $SCRIPT_DIR/xahl_node.vars file. =$XAHAU_NODE_SIZE"
         echo "Please choose an option:"
         echo "1. tiny = less than 8G-RAM, 50GB-HDD"
         echo "2. medium = 8-16G RAM, 250GBB-HDD"
-        echo "3. huge = 32G+ RAM, no limit on HDD"
+        echo "3. huge = 32G+ RAM, no limit on HDD ${NC}"
         read -p "Enter your choice [1-3]: " choice
         
         case $choice in
@@ -204,13 +213,13 @@ FUNC_CLONE_NODE_SETUP(){
         XAHAU_ONLINE_DELETE=""
     fi
     echo "."
-    sed -i "/^\[node_size\]/!b;n;c$XAHAU_NODE_SIZE" /opt/xahaud/etc/xahaud.cfg
+    sudo sed -i "/^\[node_size\]/!b;n;c$XAHAU_NODE_SIZE" /opt/xahaud/etc/xahaud.cfg
     echo ".."
-    sed -i -e 's/^#\{0,1\}\(\[ledger_history\]\)/\1/; /^\[ledger_history\]/ { n; s/.*/'"$XAHAU_LEDGER_HISTORY"'/; }' /opt/xahaud/etc/xahaud.cfg   
+    sudo sed -i -e 's/^#\{0,1\}\(\[ledger_history\]\)/\1/; /^\[ledger_history\]/ { n; s/.*/'"$XAHAU_LEDGER_HISTORY"'/; }' /opt/xahaud/etc/xahaud.cfg   
     echo "..."
-    grep -q 'online_delete' /opt/xahaud/etc/xahaud.cfg || sed -i '/^online_delete.*/!{ /\[node_db\]/ s/$/\nonline_delete='"$XAHAU_ONLINE_DELETE"'/ }' /opt/xahaud/etc/xahaud.cfg
+    sudo grep -q 'online_delete' /opt/xahaud/etc/xahaud.cfg || sed -i '/^online_delete.*/!{ /\[node_db\]/ s/$/\nonline_delete='"$XAHAU_ONLINE_DELETE"'/ }' /opt/xahaud/etc/xahaud.cfg
     echo "...."
-    sed -i "s/online_delete=.*/online_delete=$XAHAU_ONLINE_DELETE/" /opt/xahaud/etc/xahaud.cfg
+    sudo sed -i "s/online_delete=.*/online_delete=$XAHAU_ONLINE_DELETE/" /opt/xahaud/etc/xahaud.cfg
     echo "....."
 
     # restart xahau for changes to take effect
@@ -287,8 +296,8 @@ FUNC_CERTBOT(){
     # Prompt for user email if not provided as a variable
     if [ -z "$CERT_EMAIL" ]; then
         echo
-        read -p "Enter your email address for certbot updates: " CERT_EMAIL
-        sed -i "s/^CERT_EMAIL=.*/CERT_EMAIL=\"$CERT_EMAIL\"/" $SCRIPT_DIR/xahl_node.vars
+        read -p "${BLUE}Enter your email address for certbot updates: ${NC}" CERT_EMAIL
+        sudo sed -i "s/^CERT_EMAIL=.*/CERT_EMAIL=\"$CERT_EMAIL\"/" $SCRIPT_DIR/.env
         echo
     fi
 
@@ -314,14 +323,11 @@ FUNC_LOGROTATE(){
     echo -e "${GREEN}## ${YELLOW}Setup: Configurng LOGROTATE files...${NC}"
     sleep 2s
 
-    USER_ID=$(getent passwd $EUID | cut -d: -f1)
-
-
     # Prompt for Chain if not provided as a variable
     if [ -z "$VARVAL_CHAIN_NAME" ]; then
 
         while true; do
-         read -p "Enter which chain your node is deployed on (e.g. mainnet or testnet): " _input
+         read -p "${BLUE}Enter which chain your node is deployed on (e.g. mainnet or testnet): ${NC}" _input
 
             case $_input in
                 testnet )
@@ -392,27 +398,32 @@ FUNC_ALLOWLIST_CHECK(){
         echo "All default IPs already found in Allowlist file"
         echo
     else
-        echo "adding some default IPs..."
+        echo "adding default IPs..."
         if ! grep -q "allow $SRC_IP;  # Detected IP of the SSH session" "$SCRIPT_DIR/nginx_allowlist.conf"; then
             echo "allow $SRC_IP;  # Detected IP of the SSH session" >> $SCRIPT_DIR/nginx_allowlist.conf
             echo "added IP $SRC_IP;  # Detected IP of the SSH session"
+        else
+            echo "SSH session IP, $SRC_IP, already in list."
         fi
         if ! grep -q "allow $LOCAL_IP; # Local IP of server" "$SCRIPT_DIR/nginx_allowlist.conf"; then
             echo "allow $LOCAL_IP; # Local IP of server" >> $SCRIPT_DIR/nginx_allowlist.conf
             echo "added IP $LOCAL_IP; # Local IP of the server"
+        else
+            echo "Local IP of the server, $LOCAL_IP, already in list."
         fi
         if ! grep -q "allow $NODE_IP;  # ExternalIP of the Node itself" "$SCRIPT_DIR/nginx_allowlist.conf"; then
             echo "allow $NODE_IP;  # ExternalIP of the Node itself" >> $SCRIPT_DIR/nginx_allowlist.conf
             echo "added IP $NODE_IP;  # ExternalIP of the Node itself"
+        else
+            echo "External IP of the Node itself, $NODE_IP, already in list."
         fi
         echo
-        echo "default IPs added to Allowlist file"
         echo
     fi
-    echo -e "${GREEN}## ${YELLOW}Add more IPs to the Allowlist, or press enter to skip... ${NC}"
+    echo -e "${GREEN}## ${YELLOW}Add additional IPs to the Allowlist, or press enter to skip... ${NC}"
     echo
     while true; do
-        read -p "Enter an IP address : " user_ip
+        read -p "${BLUE}Enter additional IP address here (one at a time for example 10.0.0.20): " user_ip
 
         # Validate the input using regex (IPv4 format)
         if [[ $user_ip =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
@@ -437,12 +448,12 @@ FUNC_INSTALL_LANDINGPAGE(){
     echo
 
     if [ -z "$INSTALL_LANDINGPAGE" ]; then
-        read -p "Do you want to (re)install the landng webpage?: true or false?" INSTALL_LANDINGPAGE
-        sed -i "s/^INSTALL_LANDINGPAGE=.*/INSTALL_LANDINGPAGE=\"$INSTALL_LANDINGPAGE\"/" $SCRIPT_DIR/xahl_node.vars
+        read -p "${BLUE}Do you want to (re)install the landng webpage?: true or false?${NC}" INSTALL_LANDINGPAGE
+        sudo sed -i "s/^INSTALL_LANDINGPAGE=.*/INSTALL_LANDINGPAGE=\"$INSTALL_LANDINGPAGE\"/" $SCRIPT_DIR/xahl_node.vars
     fi
     if [ "$INSTALL_LANDINGPAGE" == "true" ]; then
         
-        mkdir -p /home/www
+        sudo mkdir -p /home/www
         echo "created /home/www directory for webfiles, now re-installing webpage"
 
         if [  -f /home/www/index.html ]; then
@@ -541,7 +552,7 @@ FUNC_INSTALL_LANDINGPAGE(){
                 const days = Math.floor(uptimeInSeconds / 86400);
                 const hours = Math.floor((uptimeInSeconds % 86400) / 3600);
                 const minutes = Math.floor((uptimeInSeconds % 3600) / 60);
-                const formattedUptime = `\${days} Days, \${hours.toString().padStart(2, '0')} Hours, and \${minutes.toString().padStart(2, '0')} Mins`;
+                const formattedUptime = \`\${days} Days, \${hours.toString().padStart(2, '0')} Hours, and \${minutes.toString().padStart(2, '0')} Mins\`;
                 document.getElementById('uptime').textContent = formattedUptime;
                 document.getElementById('time').textContent = serverInfo.result.info.time;
             })
@@ -555,7 +566,7 @@ FUNC_INSTALL_LANDINGPAGE(){
 </html>
 EOF
 
-        mkdir -p /home/www/error
+        sudo mkdir -p /home/www/error
         echo "created /home/www/error directory for blocked page, re-installing webpage"
         if [  -f /home/www/error/custom_403.html ]; then
             sudo rm -r /home/www/error/custom_403.html
@@ -732,16 +743,16 @@ EOF
     fi
 
     if [ -z "$INSTALL_TOML" ]; then
-        read -p "Do you want to (re)install the default xahau.toml file?: true or false?" INSTALL_TOML
-        sed -i "s/^INSTALL_TOML=.*/INSTALL_TOML=\"$INSTALL_TOML\"/" $SCRIPT_DIR/xahl_node.vars
+        read -p "${BLUE}Do you want to (re)install the default xahau.toml file?: true or false?${NC}" INSTALL_TOML
+        sudo sed -i "s/^INSTALL_TOML=.*/INSTALL_TOML=\"$INSTALL_TOML\"/" $SCRIPT_DIR/xahl_node.vars
     fi
     if [ "$INSTALL_TOML" == "true" ]; then
         
         # Prompt for user email if not provided as a variable
         if [ -z "$TOML_EMAIL" ]; then
             echo
-            read -p "Enter your email address for the PUBLIC .toml file: " TOML_EMAIL
-            sed -i "s/^TOML_EMAIL=.*/TOML_EMAIL=\"$TOML_EMAIL\"/" $SCRIPT_DIR/xahl_node.vars
+            read -p "${BLUE}Enter your email address for the PUBLIC .toml file: ${NC}" TOML_EMAIL
+            sudo sed -i "s/^TOML_EMAIL=.*/TOML_EMAIL=\"$TOML_EMAIL\"/" $SCRIPT_DIR/.env
             echo
         fi
 
@@ -787,6 +798,10 @@ EOF
 }
 
 
+
+
+
+
 FUNC_NODE_DEPLOY(){
     
     echo -e "${GREEN}#########################################################################${NC}"
@@ -802,11 +817,11 @@ FUNC_NODE_DEPLOY(){
     FUNC_PKG_CHECK;
 
     if [ "$VARVAL_CHAIN_NAME" != "mainnet" ] && [ "$VARVAL_CHAIN_NAME" != "testnet" ] && [ "$VARVAL_CHAIN_NAME" != "logrotate" ]; then
-        echo -e "${RED}VARVAL_CHAIN_NAME not set in $SCRIPT_DIR/xahl_node.vars"
+        echo -e "${BLUE}VARVAL_CHAIN_NAME not set in $SCRIPT_DIR/xahl_node.vars"
         echo "Please choose an option:"
         echo "1. Mainnet = configures and deploys/updates xahau node for Mainnet"
         echo "2. Testnet = configures and deploys/updates xahau node for Testnet"
-        echo "3. Logrotate = implements the logrotate config for chain log file"
+        echo "3. Logrotate = implements the logrotate config for chain log file ${NC}"
         read -p "Enter your choice [1-3]: " choice
         
         case $choice in
@@ -828,14 +843,14 @@ FUNC_NODE_DEPLOY(){
     fi
 
     if [ "$VARVAL_CHAIN_NAME" == "mainnet" ]; then
-        echo -e "${GREEN}### Configuring node for ${BYELLOW}$_OPTION${GREEN}... ${NC}"
+        echo -e "${GREEN}### Configuring node for ${BYELLOW}$VARVAL_CHAIN_NAME${GREEN}... ${NC}"
         VARVAL_CHAIN_RPC=$NGX_MAINNET_RPC
         VARVAL_CHAIN_WSS=$NGX_MAINNET_WSS
         VARVAL_CHAIN_REPO="mainnet-docker"
         VARVAL_CHAIN_PEER=$XAHL_MAINNET_PEER
 
     elif [ "$VARVAL_CHAIN_NAME" == "testnet" ]; then
-        echo -e "${GREEN}### Configuring node for ${BYELLOW}$_OPTION${GREEN}... ${NC}"
+        echo -e "${GREEN}### Configuring node for ${BYELLOW}$VARVAL_CHAIN_NAME${GREEN}... ${NC}"
         VARVAL_CHAIN_RPC=$NGX_TESTNET_RPC
         VARVAL_CHAIN_WSS=$NGX_TESTNET_WSS
         VARVAL_CHAIN_REPO="Xahau-Testnet-Docker"
@@ -871,7 +886,7 @@ FUNC_NODE_DEPLOY(){
 
 
 
-    # Check if UFW is installed
+    # Check UFW config, install/update 
     echo
     echo -e "${GREEN}#########################################################################${NC}"
     echo 
@@ -890,8 +905,8 @@ FUNC_NODE_DEPLOY(){
         echo
         
         if [ -z "$INSTALL_UFW" ]; then
-            read -p "Do you want to install UFW (Uncomplicated Firewall) ? enter true or false:" INSTALL_UFW
-            sed -i "s/^INSTALL_UFW=.*/INSTALL_UFW=\"$INSTALL_UFW\"/" $SCRIPT_DIR/xahl_node.vars
+            read -p "${BLUE}Do you want to install UFW (Uncomplicated Firewall) ? enter true or false: ${NC}" INSTALL_UFW
+            sudo sed -i "s/^INSTALL_UFW=.*/INSTALL_UFW=\"$INSTALL_UFW\"/" $SCRIPT_DIR/xahl_node.vars
         fi
         if [ "$INSTALL_UFW" == "true" ]; then
             echo
@@ -915,8 +930,8 @@ FUNC_NODE_DEPLOY(){
 
     # Prompt for user domains if not provided as a variable
     if [ -z "$USER_DOMAIN" ]; then
-        read -p "Enter your servers domain (e.g. mydomain.com or a subdomain like xahau.mydomain.com ): " USER_DOMAIN
-        sed -i "s/^USER_DOMAIN=.*/USER_DOMAIN=\"$USER_DOMAIN\"/" $SCRIPT_DIR/xahl_node.vars
+        read -p "${BLUE}Enter your servers domain (e.g. mydomain.com or a subdomain like xahau.mydomain.com ): ${NC}" USER_DOMAIN
+        sudo sed -i "s/^USER_DOMAIN=.*/USER_DOMAIN=\"$USER_DOMAIN\"/" $SCRIPT_DIR/.env
     fi
 
     # check/install CERTBOT (for SSL)
@@ -928,7 +943,7 @@ FUNC_NODE_DEPLOY(){
 
     if [ -z "$INSTALL_CERTBOT_SSL" ]; then
         read -p "Do you want to use install CERTBOT and use SSL? : true or false?" INSTALL_CERTBOT_SSL
-        sed -i "s/^INSTALL_CERTBOT_SSL=.*/INSTALL_CERTBOT_SSL=\"$INSTALL_CERTBOT_SSL\"/" $SCRIPT_DIR/xahl_node.vars
+        sudo sed -i "s/^INSTALL_CERTBOT_SSL=.*/INSTALL_CERTBOT_SSL=\"$INSTALL_CERTBOT_SSL\"/" $SCRIPT_DIR/xahl_node.vars
     fi
     if [ "$INSTALL_CERTBOT_SSL" == "true" ]; then
         FUNC_CERTBOT;
@@ -1125,23 +1140,25 @@ EOF
     echo
     echo -e "${GREEN}#########################################################################${NC}"
     echo
-    echo -e "${GREEN}## Setup: removed old files, and Created and enabled a new Nginx configuration files ${NC}"
+    echo -e "${GREEN}## ${YELLOW}Setup: removed old files, and Created and enabled a new Nginx configuration files${NC}"
     echo
-    echo -e "${NC}Nginx is now installed and running at Local IP: ${YELLOW}$LOCAL_IP${NC} listening for the domain: ${YELLOW}$USER_DOMAIN.${NC}"
+    if $ORIGINAL_USER_ID; then 
+      echo -e "${GREEN}## ${YELLOW}Setup: just applying corrective ownership... ${NC}
+      sudo chown -R $ORIGINAL_USER_ID:users $SCRIPT_DIR
     echo
     echo -e "${GREEN}#########################################################################${NC}"
     echo
-    echo -e "${NC}if all went well, your Xahau Node will now be up and running; ${NC}"
+    echo -e "${NC}if all went well, your Xahau Node will now be up and running, you can check; ${NC}"
     echo
-    echo -e "${NC}locally, at websocket ${BYELLOW}ws://$LOCAL_IP${NC} or RPC/API ${BYELLOW}http://$LOCAL_IP ${NC}"
+    echo -e "${NC}locally at, websocket ${BYELLOW}ws://$LOCAL_IP${NC} or RPC/API and website are ${BYELLOW}http://$LOCAL_IP ${NC}"
     echo
-    echo -e "${NC}externally, at websocket ${BYELLOW}wss://$USER_DOMAIN${NC} or RPC/API ${BYELLOW}https://$USER_DOMAIN ${NC}"
+    echo -e "${NC}or externally at, websocket ${BYELLOW}wss://$USER_DOMAIN${NC} or RPC/API and website ${BYELLOW}https://$USER_DOMAIN ${NC}"
     echo
-    echo -e "use file ${BYELLOW}'$SCRIPT_DIR/$NGINX_ALLOWLIST_FILE'${NC} to add/remove IP addresses you want to allow access to your node${NC}"
+    echo -e "use file ${BYELLOW}'$SCRIPT_DIR/$NGINX_ALLOWLIST_FILE'${NC} to add/remove IP addresses that you want to have access to your submission node${NC}"
     echo -e "once file is edited and saved, run command ${BYELLOW}sudo nginx -s reload${NC} to apply new settings ${NC}"
-    echo -e "you can also use this to check the setting, if the website is not displaying correctly"
+    echo -e "you can also use this to check the settings if the website is not displaying correctly"
     echo
-    echo -e "${NC}you can use command ${YELLOW}xahaud server_info${NC} to get info direct from the server"
+    echo -e "${NC}you can use command ${YELLOW}xahaud server_info${NC} to get info directly from this server"
     echo
     echo -e "${GREEN}## ${YELLOW}Setup complete.${NC}"
     echo
