@@ -1,22 +1,48 @@
 #!/bin/bash
 
-# # Check if the script is being run with elevated privileges
-# if [ -n "$SUDO_USER" ]; then
-#     echo "Please do not run this script with sudo. It will elevate privileges if necessary."
-#     exit 1
-# fi
-
 # *** SETUP SOME VARIABLES THAT THIS SCRIPT NEEDS ***
 
 # Get current user id and store as var
 USER_ID=$(getent passwd $EUID | cut -d: -f1)
 
 # Authenticate sudo perms before script execution to avoid timeouts or errors
-sudo -l > /dev/null 2>&1
+echo "Checking privileges..."
+if sudo -l > /dev/null 2>&1; then
+    echo "Privleges good..."
+    echo "Extending the sudo timeout period, so setup does not timeout while installing..."
+    echo
+    # extend sudo timeout for USER_ID to 20 minutes, instead of default 5min
+    TMP_FILE01=$(mktemp)
+    TMP_FILENAME01=$(basename $TMP_FILE01)
+    echo "Defaults:$USER_ID timestamp_timeout=20" > TMP_FILE01
+    sudo sh -c "cat $TMP_FILE01 > /etc/sudoers.d/$TMP_FILENAME01"
+else
+    echo
+    echo "This user ($USER_ID) does not have full sudo privilages, provide the root password..."
+    if su -c "./setup.sh" root; then
+        exit
+    else
+        if [ $? -eq 1 ]; then
+          echo
+          echo "Incorrect password for root user."
+        else
+          echo 
+          echo "Failed to execute the script with "root" user ID."
+        fi
+        # Prompt the user to enter a different user ID
+        read -p "Enter a user ID that has full sudo privledges :" USER_ID
 
-# Set the sudo timeout for USER_ID to expire on reboot instead of default 5mins
-echo "Defaults:$USER_ID timestamp_timeout=-1" > /tmp/xahlsudotmp
-sudo sh -c 'cat /tmp/xahlsudotmp > /etc/sudoers.d/xahlnode_deploy'
+        # Attempt to run the command with the specified user ID
+        if su -c "./setup.sh" $USER_ID; then
+            exit
+        else
+            echo
+            echo "$USER_ID re-run script with correct sudo priveledges..."
+            echo
+            exit
+        fi
+    fi
+fi
 
 # Set Colour Vars
 GREEN='\033[0;32m'
@@ -24,13 +50,14 @@ GREEN='\033[0;32m'
 RED='\033[0;91m'  # Intense Red
 YELLOW='\033[0;33m'
 BYELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Get the absolute path of the script directory
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 source $SCRIPT_DIR/xahl_node.vars
 
-#setup date
+# Setup date (local time)
 FDATE=$(date +"%Y-%m-%dT%H:%M:%S")
 
 
@@ -38,7 +65,7 @@ FUNC_PKG_CHECK(){
     echo
     echo -e "${GREEN}#########################################################################${NC}"
     echo
-    echo -e "${GREEN}## Check/install necessary updates, and Packages... ${NC}"
+    echo -e "${GREEN}## Check/install necessary updates, ando packages... ${NC}"
     echo     
 
     # update and upgrade the system
