@@ -14,7 +14,7 @@ if sudo -l > /dev/null 2>&1; then
     # extend sudo timeout for USER_ID to 20 minutes, instead of default 5min
     TMP_FILE01=$(mktemp)
     TMP_FILENAME01=$(basename $TMP_FILE01)
-    echo "Defaults:$USER_ID timestamp_timeout=20" > TMP_FILE01
+    echo "Defaults:$USER_ID timestamp_timeout=20" > $TMP_FILE01
     sudo sh -c "cat $TMP_FILE01 > /etc/sudoers.d/$TMP_FILENAME01"
 else
     echo
@@ -335,8 +335,8 @@ FUNC_LOGROTATE(){
         done
 
     fi
-
-        cat <<EOF > /tmp/tmpxahau-logs
+        #cat <<EOF > /tmp/tmpxahau-logs
+        sudo cat <<EOF > /etc/logrotate.d/xahau-logs
 /opt/xahaud/log/*.log
         {
             su $USER_ID $USER_ID
@@ -355,7 +355,7 @@ FUNC_LOGROTATE(){
         }    
 EOF
 
-    sudo sh -c 'cat /tmp/tmpxahau-logs > /etc/logrotate.d/xahau-logs'
+    #sudo sh -c 'cat /tmp/tmpxahau-logs > /etc/logrotate.d/xahau-logs'
 
 }
 
