@@ -166,9 +166,8 @@ FUNC_CLONE_NODE_SETUP(){
         echo -e "${RED}Something wrong with updating [port_rpc_public] ip in /opt/xahaud/etc/xahaud.cfg. YOU MUST DO MANUALLY! ${NC}"
     fi
 
-    
     echo
-    echo -e "Updating node size in .cfg file  ...${NC}"
+    echo -e "Updating node size in .cfg file ..."
     echo
     if [ "$XAHAU_NODE_SIZE" != "tiny" ] && [ "$XAHAU_NODE_SIZE" != "medium" ] && [ "$XAHAU_NODE_SIZE" != "huge" ]; then
         echo -e "${BLUE}XAHAU_NODE_SIZE not set in $SCRIPT_DIR/xahl_node.vars file. =$XAHAU_NODE_SIZE"
@@ -197,20 +196,20 @@ FUNC_CLONE_NODE_SETUP(){
             sed -i "s/^XAHAU_NODE_SIZE=.*/XAHAU_NODE_SIZE=\"$XAHAU_NODE_SIZE\"/" "$SCRIPT_DIR/.env"
         else
             echo -e "XAHAU_NODE_SIZE=\"$XAHAU_NODE_SIZE\"" >> $SCRIPT_DIR/.env
-    fi
+        fi
     
-    if [ "$XAHAU_NODE_SIZE" == "tiny" ]; then
-        XAHAU_LEDGER_HISTORY=$TINY_LEDGER_HISTORY
-        XAHAU_ONLINE_DELETE=$TINY_LEDGER_DELETE
-    fi
-    if [ "$XAHAU_NODE_SIZE" == "medium" ]; then
-        XAHAU_LEDGER_HISTORY=$MEDIUM_LEDGER_HISTORY
-        XAHAU_ONLINE_DELETE=$MEDIUM_LEDGER_DELETE
-    fi
-    if [ "$XAHAU_NODE_SIZE" == "huge" ]; then
-        XAHAU_LEDGER_HISTORY="full"
-        XAHAU_ONLINE_DELETE=""
-    fi
+        if [ "$XAHAU_NODE_SIZE" == "tiny" ]; then
+            XAHAU_LEDGER_HISTORY=$TINY_LEDGER_HISTORY
+            XAHAU_ONLINE_DELETE=$TINY_LEDGER_DELETE
+        fi
+        if [ "$XAHAU_NODE_SIZE" == "medium" ]; then
+            XAHAU_LEDGER_HISTORY=$MEDIUM_LEDGER_HISTORY
+            XAHAU_ONLINE_DELETE=$MEDIUM_LEDGER_DELETE
+        fi
+        if [ "$XAHAU_NODE_SIZE" == "huge" ]; then
+            XAHAU_LEDGER_HISTORY="full"
+            XAHAU_ONLINE_DELETE=""
+        fi
     echo "."
     sudo sed -i "/^\[node_size\]/!b;n;c$XAHAU_NODE_SIZE" /opt/xahaud/etc/xahaud.cfg
     echo ".."
