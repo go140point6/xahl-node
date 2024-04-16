@@ -116,7 +116,7 @@ FUNC_CLONE_NODE_SETUP(){
     
     cd $SCRIPT_DIR
     if [ ! -d "$VARVAL_CHAIN_REPO" ]; then
-        echo "Creating directory '$SCRIPT_DIR/$VARVAL_CHAIN_REPO' to use for xahaud instalilation..."
+        echo "Creating directory '$SCRIPT_DIR/$VARVAL_CHAIN_REPO' to use for xahaud installation..."
         git clone https://github.com/Xahau/$VARVAL_CHAIN_REPO
     else
         echo "Directory '$SCRIPT_DIR/$VARVAL_CHAIN_REPO' exists, no need to re-create, updating instead..."
@@ -170,11 +170,11 @@ FUNC_CLONE_NODE_SETUP(){
     echo -e "Updating node size in .cfg file ..."
     echo
     if [ "$XAHAU_NODE_SIZE" != "tiny" ] && [ "$XAHAU_NODE_SIZE" != "medium" ] && [ "$XAHAU_NODE_SIZE" != "huge" ]; then
-        echo -e "${BLUE}XAHAU_NODE_SIZE not set in $SCRIPT_DIR/xahl_node.vars file. =$XAHAU_NODE_SIZE"
+        echo -e "${BLUE}XAHAU_NODE_SIZE= not set in $SCRIPT_DIR/.env file."
         echo "Please choose an option:"
         echo "1. tiny = less than 8G-RAM, 50GB-HDD"
         echo "2. medium = 8-16G RAM, 250GBB-HDD"
-        echo "3. huge = 32G+ RAM, no limit on HDD"
+        echo "3. huge = 32G+ RAM, no limit on HDD ${NC}"
         read -p "Enter your choice [1-3]: " choice
         
         case $choice in
