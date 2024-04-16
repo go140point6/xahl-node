@@ -331,9 +331,6 @@ FUNC_CERTBOT(){
 
 
 FUNC_LOGROTATE(){
-    # add the logrotate conf file
-    # check logrotate status = cat /var/lib/logrotate/status
-
     echo -e "${GREEN}#########################################################################${NC}"
     echo
     echo -e "${GREEN}## ${YELLOW}Setup: Configurng LOGROTATE files...${NC}"
@@ -417,27 +414,16 @@ FUNC_ALLOWLIST_CHECK(){
     echo
     
     if [ -f "$SCRIPT_DIR/nginx_allowlist.conf" ]; then
-        echo -e "Default IPs already found in allowlist file."
+        echo -e "The 'nginx_allowlist.conf' file already exsits at this location, no default changes..."
     else
-        touch "$SCRIPT_DIR/nginx_allowlist.conf"
-        if ! grep -q "allow $SRC_IP;    # Detected IP of the SSH session" "$SCRIPT_DIR/nginx_allowlist.conf"; then
-            echo "allow $SRC_IP;    # Detected IP of the SSH session" >> $SCRIPT_DIR/nginx_allowlist.conf
-            echo "added IP $SRC_IP;     # Detected IP of the SSH session"
-        else
-            echo "SSH session IP, $SRC_IP, already in list."
-        fi
-        if ! grep -q "allow $LOCAL_IP;  # Local IP of server" "$SCRIPT_DIR/nginx_allowlist.conf"; then
-            echo "allow $LOCAL_IP;  # Local IP of server" >> $SCRIPT_DIR/nginx_allowlist.conf
-            echo "added IP $LOCAL_IP;   # Local IP of the server"
-        else
-            echo "Local IP of the server, $LOCAL_IP, already in list."
-        fi
-        if ! grep -q "allow $NODE_IP;   # ExternalIP of the Node itself" "$SCRIPT_DIR/nginx_allowlist.conf"; then
-            echo "allow $NODE_IP;   # ExternalIP of the Node itself" >> $SCRIPT_DIR/nginx_allowlist.conf
-            echo "added IP $NODE_IP;    # ExternalIP of the Node itself"
-        else
-            echo "External IP of the Node itself, $NODE_IP, already in list."
-        fi
+        echo "allow $SRC_IP; # Detected IP of the SSH session" >> $SCRIPT_DIR/nginx_allowlist.conf
+        echo -e "added IP $SRC_IP; # Detected IP of the SSH session"
+      
+        echo "allow $LOCAL_IP; # Local IP of server" >> $SCRIPT_DIR/nginx_allowlist.conf
+        echo -e "added IP $LOCAL_IP; # Local IP of the server"
+
+        echo "allow $NODE_IP; # ExternalIP of the Node itself" >> $SCRIPT_DIR/nginx_allowlist.conf
+        echo -e "added IP $NODE_IP; # ExternalIP of the Node itself"
     fi
 
     echo
@@ -1073,7 +1059,7 @@ sudo sh -c "cat $TMP_FILE06 > $NGX_CONF_AVAIL/xahau"
     echo
     echo -e "${GREEN}## Setup: Created and enabled a new Nginx configuration files ${NC}"
     echo
-    echo -e "${NC}Nginx is now installed and running at Local IP: ${YELLOW}$LOCAL_IP${NC} listening for the domain: ${YELLOW}$USER_DOMAIN.${NC}"
+    echo -e "Nginx is now installed and running at Local IP: ${YELLOW}$LOCAL_IP${NC} listening for the domain: ${YELLOW}$USER_DOMAIN.${NC}"
     echo
     echo -e "${GREEN}#########################################################################${NC}"
     echo
@@ -1083,16 +1069,16 @@ sudo sh -c "cat $TMP_FILE06 > $NGX_CONF_AVAIL/xahau"
     #   sudo chown -R $ORIGINAL_USER_ID:users $SCRIPT_DIR
     # fi
 
-    echo -e "${NC}Your Xahau Node should now be up and running. ${NC}"
+    echo -e "Your Xahau Node should now be up and running."
     echo
-    echo -e "${NC}Locally: Websocket ${BYELLOW}ws://$LOCAL_IP${NC} or RPC/API ${BYELLOW}http://$LOCAL_IP ${NC}"
+    echo -e "Locally: Websocket ${BYELLOW}ws://$LOCAL_IP${NC} or RPC/API ${BYELLOW}http://$LOCAL_IP ${NC}"
     echo
-    echo -e "${NC}Externally: Websocket ${BYELLOW}wss://$USER_DOMAIN${NC} or RPC/API ${BYELLOW}https://$USER_DOMAIN ${NC}"
+    echo -e "Externally: Websocket ${BYELLOW}wss://$USER_DOMAIN${NC} or RPC/API ${BYELLOW}https://$USER_DOMAIN ${NC}"
     echo
-    echo -e "Use file ${BYELLOW}'$SCRIPT_DIR/$NGINX_ALLOWLIST_FILE'${NC} to add/remove IP addresses that access your node.${NC}"
-    echo -e "Once file is edited and saved, TEST it with 'sudo nginx -t' before running the command ${BYELLOW}'sudo nginx -s reload'${NC} to apply new settings.${NC}"
+    echo -e "Use file ${BYELLOW}'$SCRIPT_DIR/$NGINX_ALLOWLIST_FILE'${NC} to add/remove IP addresses that access your node."
+    echo -e "Once file is edited and saved, TEST it with ${BYELLOW}'sudo nginx -t'${NC} before running the command ${BYELLOW}'sudo nginx -s reload'${NC} to apply new settings."
     echo
-    echo -e "${NC}You can use command ${BYELLOW}xahaud server_info${NC} to get info direct from the xahaud server"
+    echo -e "$You can use command ${BYELLOW}xahaud server_info${NC} to get info direct from the xahaud server"
     echo
     echo -e "${GREEN}## ${YELLOW}Setup complete.${NC}"
     echo
