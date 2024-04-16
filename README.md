@@ -5,30 +5,8 @@ Xahau submission node installation with nginx &amp; lets encrypt TLS certificate
 
 This script will take the standard Xahau node install (non-docker version) and supplement it with the necessary configuration to provide a TLS secured RPC/WSS endpoint using Nginx.
 
-This script is automating the manual steps in here, please review for more information about the process: https://github.com/go140point6/xahl-info/blob/main/setup-xahaud-node.md 
+This version is a major rewrite which uses a single host (A) record in place of host and two CNAME records, among other enhancements.
 
-# Table of Contents
----
-
-- [Xahau RPC/WSS Submission Node](#xahau-rpcwss-submission-node)
-- [Table of Contents](#table-of-contents)
-  - [Current functionality](#current-functionality)
-  - [How to download \& use](#how-to-download--use)
-    - [Clone the repo](#clone-the-repo)
-    - [Vars file _(xahl\_node.vars)_](#vars-file-xahl_nodevars)
-    - [Script Usage](#script-usage)
-    - [Nginx related](#nginx-related)
-      - [Permitted Access - scripted](#permitted-access---scripted)
-      - [Permitted Access - manual](#permitted-access---manual)
-    - [Testing your Xahaud server and Websocket endpoint](#testing-your-xahaud-server-and-websocket-endpoint)
-      - [xahaud](#xahaud)
-      - [Websocket](#websocket)
-  - [Manual updates](#manual-updates)
-    - [Contributors:](#contributors)
-    - [Feedback](#feedback)
-
-
----
 ---
 
 ## Current functionality
@@ -36,109 +14,105 @@ This script is automating the manual steps in here, please review for more infor
  - Supports the use of custom variables using the `xahl_node.vars` file
  - Detects UFW firewall & applies necessary firewall updates.
  - Installs & configures Nginx 
-   - sets up nginx so that it splits the incoming traffic to your supplied domain to the correct 3 backends. 1.static website, 2.the websocket(wss) and 3 any rpc traffic.
+   - Sets up nginx so that it splits the incoming traffic to your supplied domain to the correct 3 backends. 1.static website, 2.the websocket(wss) and 3.any rpc traffic.
    - TL;DR; you only need ONE domain pointing to this server.
-   - Automatically detects the IPs of your ssh session, the node itself, and its local enviroment then adds them to the nginx_allowlist.conf file
+   - Automatically detects the IPs of your ssh session, the node itself, and its local environment, and adding them to the nginx_allowlist.conf file
  - Applies NIST security best practices
  
 ---
 
-# How to download & use
+## Update
 
-To download the script(s) to your local node & install, read over the following sections and when ready simply copy and paste the code snippets to your terminal window.
+NOT FULLY TESTED. If you are updating from an older version, where the allow list was saved in `/etc/nginx/sites-available/xahau` then save your allow entries before installing.
 
-## to UPDATE
+        sudo cp /etc/nginx/sites-available/xahau ~/ # Copy to your home folder
+        cat ~/xahau # view the file
 
-if you are updating from an older version, where the allow list was saved in `/etc/nginx/sites-available/xahau` then save them 1st with
+## Install git (if not installed), clone the repository
 
-        sudo nano /etc/nginx/sites-available/xahau
-
-## Clone the repo, and prep for starting
-
-        cd /root
-        apt install git
+        cd ~
+        sudo apt-get update
+        sudo apt-get install git
         git clone https://github.com/go140point6/xahl-node
         cd xahl-node
-        chmod +x *.sh
 
-adjust default settings with the var file, see below, then start the install with 
+Review xahl_node.vars and adjust default settings and user-specific variables, then run the script: 
 
         ./setup.sh
 
-
-
 ### Vars file _(xahl_node.vars)_
 
-The vars file allows you to manually update variables which helps to avoid interactive prompts during the install;
+The vars file allows you to manually update variables which helps to avoid interactive prompts during the install.
 
-- `USER_DOMAIN` - your server domain.
-- `CERT_EMAIL` - email address for certificate renewals etc.
-- `XAHAU_NODE_SIZE` - allows you to state a "size" of the node, which change the amount of RAM, and HDD thats used.
+- `USER_DOMAIN` - your server domain. Unlike previous versions of this script, this is a single host (A) record (i.e. xahl.EXAMPLE.com).
+- `CERT_EMAIL` - email address for certificate renewals.
+- `TOML_EMIAL` - email address for the PUBLIC .toml file. Can be the same as CERT_EMAIL if desired, or something different.
+- `XAHAU_NODE_SIZE` - allows you to establish a "size" of the node.
 
-The file also controls the default packages that are installed on the node;
+The file also controls the default packages that are installed on the node.
 
-to adjust the default settings via this file, edit it using your preferred editor such as nano;
+To adjust the default settings via this file, edit it using your preferred editor such as nano:
 
         nano ~/xahl-node/xahl_node.vars
 
-there are 3 size options tiny/medium/huge, `medium` is the default.
+there are 3 size options tiny/medium/huge, `tiny` is the default.
 - `tiny` -  less than 8G-RAM 50GB-HDD
 - `medium` - 16G-RAM 250GB-HDD
 - `huge` - 32G+RAM nolimit-HDD
 
-there are other options in the vars file to, like; 
-
-you can choose to use/install certbot for a SSL via lets encrypt. useful if behind another instance of nginx/NginxProxyManager etc
+There are other options available in the .vars file, i.e.:
+ 
+    INSTALL_CERTBOT_SSL="false" will keep certbot from being installed and configured (script will set up xahaud for non-SSL use).
+    INSTALL_LANDINGPAGE="false" will prevent creation/updating of the landing page (i.e. if you have a custom one).
 
 ---
 
 ### Nginx related
 
-All the domain specific config is contained in the file `NGX_CONF_NEW`/`USER_DOMAIN` so a file named same as domain name (in the directory specified in the vars file)
+All the domain specific config is contained in the file `/etc/nginx/sites-available/xahau` but the allow list is now in the user's home folder `~/nginx_` for easier editing.
 
-logs are held at /var/log/nginx/
+Any changes to the `nginx_allowlist.conf` file MUST first be tested with `sudo nginx -t` and then reloaded with `sudo nginx -s reload`.
 
-and Although this works best as a dedicated host with no other nginx/proxy instances,
+Logs are held at `/var/log/nginx/`.
 
-it can work behind another instance, you may need to adjust the setting in the main nginx.conf file to suit your enviroment, mainly so the allow list works correctly.
+Although this works best on a dedicated host with no other nginx/proxy instances, it can work behind another instance.
+You may need to adjust the setting in the main nginx.conf file to suit your environment so the allow list works correctly.
 
-for example, in nginx.conf you may need to adjust/add `set_real_ip_from 172.16.0.0/12;` for you proxy IP etc
+For example, in nginx.conf you may need to adjust/add `set_real_ip_from 172.16.0.0/12;` for your proxy IP.
 
 
 # Node IP Permissions
 
-the setup script adds 3 by default to the nginx_allowlist file, the detected SSH IP, the external nodes IP, and the local enviroment IP.
+The setup script adds 3 IP addresses by default to the nginx_allowlist.conf file: the detected SSH IP, the external nodes IP, and the local environment IP.
 
-In order to add/remove access to your node, you adjust the addresses within the `nginx_allowlist.conf` file
+In order to add/remove access to your node, you adjust the addresses within the `nginx_allowlist.conf` file.
 
-edit the `nginx_allowlist.conf` file with your preferred editor e.g. `nano nginx_allowlist.conf`.
+Edit the `nginx_allowlist.conf` file with your preferred editor e.g. `nano nginx_allowlist.conf`.
 
-start every line with allow, a space, and then the IP, and end the line with a semicolon.
+Start every line with allow, a space, and then the IP, and end the line with a semicolon.
 
-for example
+for example:
 
         allow 127.0.0.0;
         allow 192.168.0.1;
 
-__ADD__ : Simply add a new line with the same syntax as above,
+__ADD__ : Add a new line with the same syntax as above.
 
-__REMOVE__ : Simply delete the line.
+__REMOVE__ : Delete the line.
 
 THEN
 
-__RELOAD__ : for the changes to take effect you need to issue command `sudo nginx -s reload`
+__TEST_AND_RELOAD__ : First `sudo nginx -t` and if successful, perform a reload with `sudo nginx -s reload`.
 
 ---
 
 # Testing your Xahaud server
 
-This can be done simply by entering the domain/URL into a browser.
+This can be done simply by entering the Domain or IP into a browser.
 
-this will give you either a notice that you IP is blocked, and which IP to put in the access list.
-
-or if not blocked, will use the RPC function of your node, and pull all the basic details
-
-or following these next examples of test it manually...
+This will give you one of two results:
+  - A notice that your IP is blocked, telling you which IP to add to your nginx_allowlist.conf file.
+  - Some basic details of your node pulled by RPC.
 
 #### XAHAUD
 
@@ -150,12 +124,13 @@ Note: look for `"server_state" : "full",` and your xahaud should be working as e
 
 #### WEBSOCKET
 
-to test the Websocket function, we use the wscat command (installed by default)
-Copy the following command replacing `yourdomain.com` with your domain the `USER_DOMAIN` in the vars file.)
+To test the Websocket function, use the wscat command (installed by default as part of the script)
 
-        wscat -c wss://yourdomain.com
+Copy the following command replacing `xahl.mydomain.com` with your DNS host record from `USER_DOMAIN` in the vars file.
 
-This should open another session within your terminal, similar to the below;
+        wscat -c wss://xahl.mydomain.com
+
+A successful result is shown below with the second command verifying:
 
     Connected (press CTRL+C to quit)
     >
@@ -166,10 +141,9 @@ and enter
 
 #### RPC / API is easier to check
 
-a simple command from the command line
+A simple command from the command line
 
     curl -X POST -H "Content-Type: application/json" -d '{"method":"server_info"}' http://127.0.0.1
-
 
 ---
 
@@ -186,16 +160,14 @@ To apply repo updates to your local clone, be sure to stash any modifications yo
 ---
 
 ### Contributors:  
-This was all made possible by [@inv4fee2020](https://github.com/inv4fee2020/), this is 98% his work, I just copied pasta'd... and fixed his spelling mistakes like "utilising"... ;)
+This was all made possible by [@inv4fee2020](https://github.com/inv4fee2020/), this is 90% his work, with substantial input and development from [@gadget78](https://github.com/gadget78).
 
-A special thanks & shout out to the following community members for their input & testing;
+A special thanks & shout out to the following community members for their input & testing:
 - [@nixer89](https://github.com/nixer89) helped with the websocket splitting
-- [@realgo140point6](https://github.com/go140point6)
-- [@gadget78](https://github.com/gadget78)
 - [@s4njk4n](https://github.com/s4njk4n)
 - @samsam
 
 ---
 
 ### Feedback
-Please provide feedback on any issues encountered or indeed functionality by utilizing the relevant Github issues..
+Please provide feedback on any issues encountered or indeed functionality by utilizing the relevant Github issues.

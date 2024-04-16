@@ -853,7 +853,7 @@ FUNC_NODE_DEPLOY(){
 
     # Prompt for user domain if not provided as a variable
     if [ -z "$USER_DOMAIN" ]; then
-        read -p "Enter your servers domain (e.g. mydomain.com or a subdomain like xahau.mydomain.com ): " USER_DOMAIN
+        read -p "Enter your servers domain (e.g. EXAMPLE.com or a subdomain like xahl.EXAMPLE.com ): " USER_DOMAIN
         sed -i "s/^USER_DOMAIN=.*/USER_DOMAIN=\"$USER_DOMAIN\"/" $SCRIPT_DIR/xahl_node.vars
     fi
 
