@@ -89,7 +89,7 @@ if [ -z $VARVAL_CHAIN_REPO ]; then
     echo -e "VARVAL_CHAIN_REPO is not defined for some reason. Exiting before I nuke the home folder."
     exit 1
 else
-    sudo rm -rfv ~/$VARVAL_CHAIN_REPO
+    sudo rm -rfv ~/$SCRIPT_DIR/$VARVAL_CHAIN_REPO
 fi
 sudo userdel xahaud
 sudo rm -rfv /opt/xahaud
