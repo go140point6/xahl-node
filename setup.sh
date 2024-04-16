@@ -36,7 +36,7 @@ else
           echo "Failed to execute the script with "root" user ID."
         fi
         # Prompt the user to enter a different user ID
-        read -p "Enter a user ID that has full sudo privledges :${NC}" SUDO_ID
+        read -p "Enter a user ID that has full sudo privledges :" SUDO_ID
 
         # Attempt to run the command with the specified user ID
         if su -c "./setup.sh $USER_ID" $SUDO_ID; then
@@ -82,7 +82,7 @@ FUNC_PKG_CHECK(){
 
     # update and upgrade the system
     if [ -z "$INSTALL_UPDATES" ]; then
-        read -p "do you want to check, and install OS updates? Enter true or false: ${NC}" INSTALL_UPDATES
+        read -p "do you want to check, and install OS updates? Enter true or false:" INSTALL_UPDATES
         sed -i "s/^INSTALL_UPDATES=.*/INSTALL_UPDATES=\"$INSTALL_UPDATES\"/" $SCRIPT_DIR/xahl_node.vars
     fi
     if [ "$INSTALL_UPDATES" == "true" ]; then
@@ -175,11 +175,11 @@ FUNC_CLONE_NODE_SETUP(){
     echo -e "Updating node size in .cfg file  ...${NC}"
     echo
     if [ "$XAHAU_NODE_SIZE" != "tiny" ] && [ "$XAHAU_NODE_SIZE" != "medium" ] && [ "$XAHAU_NODE_SIZE" != "huge" ]; then
-        echo -e "${BLUE}XAHAU_NODE_SIZE not set in $SCRIPT_DIR/xahl_node.vars file. =$XAHAU_NODE_SIZE"
-        echo "Please choose an option:"
-        echo "1. tiny = less than 8G-RAM, 50GB-HDD"
-        echo "2. medium = 8-16G RAM, 250GBB-HDD"
-        echo "3. huge = 32G+ RAM, no limit on HDD ${NC}"
+        echo -e "${BLUE}XAHAU_NODE_SIZE= not set in $SCRIPT_DIR/.env file."
+        echo -e "Please choose an option:"
+        echo -e "1. tiny = less than 8G-RAM, 50GB-HDD"
+        echo -e "2. medium = 8-16G RAM, 250GBB-HDD"
+        echo -e "3. huge = 32G+ RAM, no limit on HDD ${NC}"
         read -p "Enter your choice [1-3]: " choice
         
         case $choice in
@@ -197,7 +197,13 @@ FUNC_CLONE_NODE_SETUP(){
                 FUNC_EXIT
                 ;;
         esac
-        sed -i "s/^XAHAU_NODE_SIZE=.*/XAHAU_NODE_SIZE=\"$XAHAU_NODE_SIZE\"/" $SCRIPT_DIR/xahl_node.vars
+        if sudo grep -q 'XAHAU_NODE_SIZE=' "$SCRIPT_DIR/.env"; then
+            sudo sed -i "s/^XAHAU_NODE_SIZE=.*/XAHAU_NODE_SIZE=\"$XAHAU_NODE_SIZE\"/" "$SCRIPT_DIR/.env"
+        else
+            sudo echo -e "XAHAU_NODE_SIZE=\"$XAHAU_NODE_SIZE\"" >> $SCRIPT_DIR/.env
+
+        fi
+
     fi
     
     if [ "$XAHAU_NODE_SIZE" == "tiny" ]; then
@@ -222,7 +228,7 @@ FUNC_CLONE_NODE_SETUP(){
     sudo sed -i "s/online_delete=.*/online_delete=$XAHAU_ONLINE_DELETE/" /opt/xahaud/etc/xahaud.cfg
     echo "....."
 
-    # restart xahau for changes to take effect
+    echo "restarting xahaud service"
     sudo systemctl restart xahaud.service
 
     echo 
@@ -297,7 +303,11 @@ FUNC_CERTBOT(){
     if [ -z "$CERT_EMAIL" ]; then
         echo
         read -p "Enter your email address for certbot updates: ${NC}" CERT_EMAIL
-        sudo sed -i "s/^CERT_EMAIL=.*/CERT_EMAIL=\"$CERT_EMAIL\"/" $SCRIPT_DIR/.env
+        if sudo grep -q 'CERT_EMAIL=' "$SCRIPT_DIR/.env"; then
+            sudo sed -i "s/^CERT_EMAIL=.*/CERT_EMAIL=\"$CERT_EMAIL\"/" "$SCRIPT_DIR/.env"
+        else
+            sudo echo -e "CERT_EMAIL=\"$CERT_EMAIL\"" >> $SCRIPT_DIR/.env
+        fi
         echo
     fi
 
@@ -327,7 +337,7 @@ FUNC_LOGROTATE(){
     if [ -z "$VARVAL_CHAIN_NAME" ]; then
 
         while true; do
-         read -p "Enter which chain your node is deployed on (e.g. mainnet or testnet): ${NC}" _input
+         read -p "Enter which chain your node is deployed on (e.g. mainnet or testnet): " _input
 
             case $_input in
                 testnet )
@@ -393,37 +403,32 @@ FUNC_ALLOWLIST_CHECK(){
         LOCAL_IP="127.0.0.1"
     fi
 
-    if grep -q -e "allow $SRC_IP;  # Detected IP of the SSH session" -e "allow $LOCAL_IP; # LocalIP of server" -e "allow $NODE_IP;  # ExternalIP of the Node itself" "$SCRIPT_DIR/nginx_allowlist.conf"; then
-        # All three default IPs were found
-        echo "All default IPs already found in Allowlist file"
-        echo
+    echo "adding default IPs..."
+    echo
+    if ! grep -q "allow $SRC_IP;  # Detected IP of the SSH session" "$SCRIPT_DIR/nginx_allowlist.conf"; then
+        echo "allow $SRC_IP;  # Detected IP of the SSH session" >> $SCRIPT_DIR/nginx_allowlist.conf
+        echo "added IP $SRC_IP;  # Detected IP of the SSH session"
     else
-        echo "adding default IPs..."
-        if ! grep -q "allow $SRC_IP;  # Detected IP of the SSH session" "$SCRIPT_DIR/nginx_allowlist.conf"; then
-            echo "allow $SRC_IP;  # Detected IP of the SSH session" >> $SCRIPT_DIR/nginx_allowlist.conf
-            echo "added IP $SRC_IP;  # Detected IP of the SSH session"
-        else
-            echo "SSH session IP, $SRC_IP, already in list."
-        fi
-        if ! grep -q "allow $LOCAL_IP; # Local IP of server" "$SCRIPT_DIR/nginx_allowlist.conf"; then
-            echo "allow $LOCAL_IP; # Local IP of server" >> $SCRIPT_DIR/nginx_allowlist.conf
-            echo "added IP $LOCAL_IP; # Local IP of the server"
-        else
-            echo "Local IP of the server, $LOCAL_IP, already in list."
-        fi
-        if ! grep -q "allow $NODE_IP;  # ExternalIP of the Node itself" "$SCRIPT_DIR/nginx_allowlist.conf"; then
-            echo "allow $NODE_IP;  # ExternalIP of the Node itself" >> $SCRIPT_DIR/nginx_allowlist.conf
-            echo "added IP $NODE_IP;  # ExternalIP of the Node itself"
-        else
-            echo "External IP of the Node itself, $NODE_IP, already in list."
-        fi
-        echo
-        echo
+        echo "SSH session IP, $SRC_IP, already in list."
     fi
-    echo -e "${GREEN}## ${YELLOW}Add additional IPs to the Allowlist, or press enter to skip... ${NC}"
+    if ! grep -q "allow $LOCAL_IP; # Local IP of server" "$SCRIPT_DIR/nginx_allowlist.conf"; then
+        echo "allow $LOCAL_IP; # Local IP of server" >> $SCRIPT_DIR/nginx_allowlist.conf
+        echo "added IP $LOCAL_IP; # Local IP of the server"
+    else
+        echo "Local IP of the server, $LOCAL_IP, already in list."
+    fi
+    if ! grep -q "allow $NODE_IP;  # ExternalIP of the Node itself" "$SCRIPT_DIR/nginx_allowlist.conf"; then
+        echo "allow $NODE_IP;  # ExternalIP of the Node itself" >> $SCRIPT_DIR/nginx_allowlist.conf
+        echo "added IP $NODE_IP;  # ExternalIP of the Node itself"
+    else
+        echo "External IP of the Node itself, $NODE_IP, already in list."
+    fi
+    echo
+    echo
+    echo -e "${BLUE}Add additional IPs to the Allowlist, or press enter to skip... ${NC}"
     echo
     while true; do
-        read -p -e "${BLUE}Enter additional IP address here (one at a time for example 10.0.0.20): " user_ip
+        read -p "Enter an additional IP address here (one at a time for example 10.0.0.20): " user_ip
 
         # Validate the input using regex (IPv4 format)
         if [[ $user_ip =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
@@ -448,7 +453,7 @@ FUNC_INSTALL_LANDINGPAGE(){
     echo
 
     if [ -z "$INSTALL_LANDINGPAGE" ]; then
-        read -p "Do you want to (re)install the landng webpage?: true or false?${NC}" INSTALL_LANDINGPAGE
+        read -p "Do you want to (re)install the landng webpage?: true or false?" INSTALL_LANDINGPAGE
         sudo sed -i "s/^INSTALL_LANDINGPAGE=.*/INSTALL_LANDINGPAGE=\"$INSTALL_LANDINGPAGE\"/" $SCRIPT_DIR/xahl_node.vars
     fi
     if [ "$INSTALL_LANDINGPAGE" == "true" ]; then
@@ -743,7 +748,7 @@ EOF
     fi
 
     if [ -z "$INSTALL_TOML" ]; then
-        read -p "Do you want to (re)install the default xahau.toml file?: true or false?${NC}" INSTALL_TOML
+        read -p "Do you want to (re)install the default xahau.toml file?: true or false?$" INSTALL_TOML
         sudo sed -i "s/^INSTALL_TOML=.*/INSTALL_TOML=\"$INSTALL_TOML\"/" $SCRIPT_DIR/xahl_node.vars
     fi
     if [ "$INSTALL_TOML" == "true" ]; then
@@ -751,8 +756,13 @@ EOF
         # Prompt for user email if not provided as a variable
         if [ -z "$TOML_EMAIL" ]; then
             echo
-            read -p "Enter your email address for the PUBLIC .toml file: ${NC}" TOML_EMAIL
+            read -p "Enter your email address for the PUBLIC .toml file: " TOML_EMAIL
             sudo sed -i "s/^TOML_EMAIL=.*/TOML_EMAIL=\"$TOML_EMAIL\"/" $SCRIPT_DIR/.env
+            if sudo grep -q 'TOML_EMAIL=' "$SCRIPT_DIR/.env"; then
+                sudo sed -i "s/^TOML_EMAIL=.*/TOML_EMAIL=\"$TOML_EMAIL\"/" "$SCRIPT_DIR/.env"
+            else
+                sudo echo -e "TOML_EMAIL=\"$TOML_EMAIL\"" >> $SCRIPT_DIR/.env
+            fi
             echo
         fi
 
@@ -905,7 +915,7 @@ FUNC_NODE_DEPLOY(){
         echo
         
         if [ -z "$INSTALL_UFW" ]; then
-            read -p "Do you want to install UFW (Uncomplicated Firewall) ? enter true or false: ${NC}" INSTALL_UFW
+            read -p "Do you want to install UFW (Uncomplicated Firewall) ? enter true or false: " INSTALL_UFW
             sudo sed -i "s/^INSTALL_UFW=.*/INSTALL_UFW=\"$INSTALL_UFW\"/" $SCRIPT_DIR/xahl_node.vars
         fi
         if [ "$INSTALL_UFW" == "true" ]; then
@@ -930,8 +940,12 @@ FUNC_NODE_DEPLOY(){
 
     # Prompt for user domains if not provided as a variable
     if [ -z "$USER_DOMAIN" ]; then
-        read -p "Enter your servers domain (e.g. mydomain.com or a subdomain like xahau.mydomain.com ): ${NC}" USER_DOMAIN
-        sudo sed -i "s/^USER_DOMAIN=.*/USER_DOMAIN=\"$USER_DOMAIN\"/" $SCRIPT_DIR/.env
+        read -p "Enter your servers domain (e.g. mydomain.com or a subdomain like xahau.mydomain.com ): " USER_DOMAIN
+        if sudo grep -q 'USER_DOMAIN=' "$SCRIPT_DIR/.env"; then
+            sudo sed -i "s/^USER_DOMAIN=.*/USER_DOMAIN=\"$USER_DOMAIN\"/" "$SCRIPT_DIR/.env"
+        else
+            sudo echo -e "USER_DOMAIN=\"$USER_DOMAIN\"" >> $SCRIPT_DIR/.env
+        fi
     fi
 
     # check/install CERTBOT (for SSL)
@@ -1195,3 +1209,5 @@ FUNC_EXIT_ERROR(){
 	}
   
 FUNC_NODE_DEPLOY
+
+FUNC_EXIT
