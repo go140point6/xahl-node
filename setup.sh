@@ -62,8 +62,6 @@ NC='\033[0m' # No Color
 # Get the absolute path of the script directory
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 source $SCRIPT_DIR/xahl_node.vars
-touch $SCRIPT_DIR/.env
-source $SCRIPT_DIR/.env
 
 # Setup date (local time)
 FDATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -73,10 +71,10 @@ FUNC_PKG_CHECK(){
     echo
     echo -e "${GREEN}#########################################################################${NC}"
     echo
-    echo -e "${GREEN}## Check/install necessary updates, ando packages... ${NC}"
+    echo -e "${GREEN}## ${YELLOW}Check/install necessary updates, ando packages... ${NC}"
     echo     
 
-    # update and upgrade the system
+    # Update and upgrade the system
     if [ -z "$INSTALL_UPDATES" ]; then
         read -p "Do you want to check, and install OS updates? Enter true or false: " INSTALL_UPDATES
         sed -i "s/^INSTALL_UPDATES=.*/INSTALL_UPDATES=\"$INSTALL_UPDATES\"/" $SCRIPT_DIR/xahl_node.vars
@@ -85,9 +83,9 @@ FUNC_PKG_CHECK(){
       sudo apt update -y && sudo apt upgrade -y
     fi
 
-    echo -e "${GREEN}## cycle through packages in vars file, and install... ${NC}"
+    echo -e "${GREEN}## ${YELLOW}Cycle through packages in vars file, and install... ${NC}"
     echo     
-    # cycle through packages in vars file, and install
+    # Cycle through packages in vars file, and install
     for i in "${SYS_PACKAGES[@]}"
     do
         hash $i &> /dev/null
@@ -110,7 +108,7 @@ FUNC_CLONE_NODE_SETUP(){
     echo
     echo -e "${GREEN}#########################################################################${NC}"
     echo
-    echo -e "## ${YELLOW}Starting Xahau Node install ...${NC}"
+    echo -e "${GREEN}## ${YELLOW}Starting Xahau Node install ...${NC}"
     echo
     echo -e "Cloning repo https://github.com/Xahau/$VARVAL_CHAIN_REPO'"
     
@@ -214,12 +212,7 @@ FUNC_CLONE_NODE_SETUP(){
                     FUNC_EXIT
                     ;;
             esac
-            if grep -q 'XAHAU_NODE_SIZE=' "$SCRIPT_DIR/.env"; then
-                sed -i "s/^XAHAU_NODE_SIZE=.*/XAHAU_NODE_SIZE=\"$XAHAU_NODE_SIZE\"/" "$SCRIPT_DIR/.env"
-            else
-                echo -e "XAHAU_NODE_SIZE=\"$XAHAU_NODE_SIZE\"" >> $SCRIPT_DIR/.env
-            fi
-
+            sudo sed -i "s/^XAHAU_NODE_SIZE=.*/XAHAU_NODE_SIZE=\"$XAHAU_NODE_SIZE\"/" $SCRIPT_DIR/xahl_node.vars
         fi
     
         if [ "$XAHAU_NODE_SIZE" == "tiny" ]; then
@@ -320,11 +313,7 @@ FUNC_CERTBOT(){
     if [ -z "$CERT_EMAIL" ]; then
         echo
         read -p "Enter your email address for certbot updates: " CERT_EMAIL
-        if grep -q 'CERT_EMAIL=' "$SCRIPT_DIR/.env"; then
-            sed -i "s/^CERT_EMAIL=.*/CERT_EMAIL=\"$CERT_EMAIL\"/" "$SCRIPT_DIR/.env"
-        else
-            echo -e "CERT_EMAIL=\"$CERT_EMAIL\"" >> $SCRIPT_DIR/.env
-        fi
+        sed -i "s/^CERT_EMAIL=.*/CERT_EMAIL=\"$CERT_EMAIL\"/" $SCRIPT_DIR/xahl_node.vars
         echo
     fi
 
@@ -701,12 +690,7 @@ sudo sh -c "cat $TMP_FILE04 > /home/www/error/custom_403.html"
         if [ -z "$TOML_EMAIL" ]; then
             echo
             read -p "Enter your email address for the PUBLIC .toml file: " TOML_EMAIL
-            sed -i "s/^TOML_EMAIL=.*/TOML_EMAIL=\"$TOML_EMAIL\"/" $SCRIPT_DIR/.env
-            if grep -q 'TOML_EMAIL=' "$SCRIPT_DIR/.env"; then
-                sed -i "s/^TOML_EMAIL=.*/TOML_EMAIL=\"$TOML_EMAIL\"/" "$SCRIPT_DIR/.env"
-            else
-                echo -e "TOML_EMAIL=\"$TOML_EMAIL\"" >> $SCRIPT_DIR/.env
-            fi
+            sed -i "s/^TOML_EMAIL=.*/TOML_EMAIL=\"$TOML_EMAIL\"/" $SCRIPT_DIR/xahl_node.vars
             echo
         fi
         
@@ -728,7 +712,7 @@ website = "https://$USER_DOMAIN"
 
 [[SERVERS]]
 domain = "https://$USER_DOMAIN"
-install = "Created by go140point6 & gadget78 (fork of original work by inv4fee2020 for XDC Networks.)"
+install = "Created by go140point6 & gadget78 (fork of original work by inv4fee2020 for XDC Network.)"
 
 [[STATUS]]
 NETWORK = "$VARVAL_CHAIN_NAME"
@@ -877,11 +861,7 @@ FUNC_NODE_DEPLOY(){
     # Prompt for user domain if not provided as a variable
     if [ -z "$USER_DOMAIN" ]; then
         read -p "Enter your servers domain (e.g. mydomain.com or a subdomain like xahau.mydomain.com ): " USER_DOMAIN
-        if grep -q 'USER_DOMAIN=' "$SCRIPT_DIR/.env"; then
-            sed -i "s/^USER_DOMAIN=.*/USER_DOMAIN=\"$USER_DOMAIN\"/" "$SCRIPT_DIR/.env"
-        else
-            echo -e "USER_DOMAIN=\"$USER_DOMAIN\"" >> $SCRIPT_DIR/.env
-        fi
+        sed -i "s/^USER_DOMAIN=.*/USER_DOMAIN=\"$USER_DOMAIN\"/" $SCRIPT_DIR/xahl_node.vars
     fi
 
     # check/install CERTBOT (for SSL)
@@ -1103,9 +1083,9 @@ sudo sh -c "cat $TMP_FILE06 > $NGX_CONF_AVAIL/xahau"
     echo -e "${NC}Externally: Websocket ${BYELLOW}wss://$USER_DOMAIN${NC} or RPC/API ${BYELLOW}https://$USER_DOMAIN ${NC}"
     echo
     echo -e "Use file ${BYELLOW}'$SCRIPT_DIR/$NGINX_ALLOWLIST_FILE'${NC} to add/remove IP addresses that access your node.${NC}"
-    echo -e "Once file is edited and saved, TEST it with `sudo nginx -t` before running the command ${BYELLOW}sudo nginx -s reload${NC} to apply new settings.${NC}"
+    echo -e "Once file is edited and saved, TEST it with 'sudo nginx -t' before running the command ${BYELLOW}'sudo nginx -s reload'${NC} to apply new settings.${NC}"
     echo
-    echo -e "${NC}You can use command ${YELLOW}xahaud server_info${NC} to get info direct from the xahaud server"
+    echo -e "${NC}You can use command ${BYELLOW}xahaud server_info${NC} to get info direct from the xahaud server"
     echo
     echo -e "${GREEN}## ${YELLOW}Setup complete.${NC}"
     echo
