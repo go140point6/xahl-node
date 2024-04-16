@@ -110,9 +110,9 @@ FUNC_CLONE_NODE_SETUP(){
     echo
     echo -e "${GREEN}#########################################################################${NC}"
     echo
-    echo -e "${GREEN}## ${YELLOW}Starting Xahau Node install ...${NC}"
+    echo -e "## ${YELLOW}Starting Xahau Node install ...${NC}"
     echo
-    echo -e "Cloning repo https://github.com/Xahau/$VARVAL_CHAIN_REPO' ${NC}"
+    echo -e "Cloning repo https://github.com/Xahau/$VARVAL_CHAIN_REPO'"
     
     cd $SCRIPT_DIR
     if [ ! -d "$VARVAL_CHAIN_REPO" ]; then
@@ -126,20 +126,20 @@ FUNC_CLONE_NODE_SETUP(){
     sudo ./xahaud-install-update.sh
 
     echo
-    echo -e "Updating .cfg file to limit public RPC/WS to localhost ...${NC}"
+    echo -e "Updating .cfg file to limit public RPC/WS to localhost ..."
 
     sudo sed -i -E '/^\[port_ws_public\]$/,/^\[/ {/^(ip = )0\.0\.0\.0/s/^(ip = )0\.0\.0\.0/\1127.0.0.1/}' /opt/xahaud/etc/xahaud.cfg    
     if grep -qE "^\[port_ws_public\]$" "/opt/xahaud/etc/xahaud.cfg" && grep -q "ip = 0.0.0.0" "/opt/xahaud/etc/xahaud.cfg"; then
         sudo sed -i -E '/^\[port_ws_public\]$/,/^\[/ s/^(ip = )0\.0\.0\.0/\1127.0.0.1/' /opt/xahaud/etc/xahaud.cfg
         sleep 2
         if grep -q "ip = 127.0.0.1" "/opt/xahaud/etc/xahaud.cfg"; then
-            echo -e "It appears that [port_ws_public] was able to update correctly. ${NC}"
+            echo -e "${GREEN}It appears that [port_ws_public] was able to update correctly. ${NC}"
         else
-            echo -e "${RED}Something wrong with updating [port_ws_public] ip in /opt/xahaud/etc/xahaud.cfg. Attempting second time..."
+            echo -e "${RED}Something wrong with updating [port_ws_public] ip in /opt/xahaud/etc/xahaud.cfg. Attempting second time...${NC}"
             sudo sed -i -E '/^\[port_ws_public\]$/,/^\[/ s/^(ip = )0\.0\.0\.0/\1127.0.0.1/' /opt/xahaud/etc/xahaud.cfg
             sleep 2
             if grep -q "ip = 127.0.0.1" "/opt/xahaud/etc/xahaud.cfg"; then
-                echo -e "It appears that [port_ws_public] was able to update correctly on the second attempt. ${NC}"
+                echo -e "${GREEN}It appears that [port_ws_public] was able to update correctly on the second attempt. ${NC}"
             else
                 echo -e "${RED}Something wrong with updating [port_ws_public] ip in /opt/xahaud/etc/xahaud.cfg. YOU MUST DO MANUALLY! ${NC}"
             fi
@@ -152,12 +152,12 @@ FUNC_CLONE_NODE_SETUP(){
     if grep -qE "^\[port_rpc_public\]$" "/opt/xahaud/etc/xahaud.cfg" && grep -q "ip = 0.0.0.0" "/opt/xahaud/etc/xahaud.cfg"; then
         sudo sed -i -E '/^\[port_rpc_public\]$/,/^\[/ s/^(ip = )0\.0\.0\.0/\1127.0.0.1/' /opt/xahaud/etc/xahaud.cfg
         if grep -q "ip = 127.0.0.1" "/opt/xahaud/etc/xahaud.cfg"; then
-            echo -e "It appears that [port_rpc_public] was able to update correctly. ${NC}"
+            echo -e "${GREEN}It appears that [port_rpc_public] was able to update correctly. ${NC}"
         else
             echo -e "${RED}Something wrong with updating [port_rpc_public] ip in /opt/xahaud/etc/xahaud.cfg. Attempting second time... ${NC}"
             sudo sed -i -E '/^\[port_rpc_public\]$/,/^\[/ s/^(ip = )0\.0\.0\.0/\1127.0.0.1/' /opt/xahaud/etc/xahaud.cfg
             if grep -q "ip = 127.0.0.1" "/opt/xahaud/etc/xahaud.cfg"; then
-                echo -e "It appears that [port_rpc_public] was able to update correctly on the second attempt. ${NC}"
+                echo -e "${GREEN}It appears that [port_rpc_public] was able to update correctly on the second attempt. ${NC}"
             else
                 echo -e "${RED}Something wrong with updating [port_rpc_public] ip in /opt/xahaud/etc/xahaud.cfg. YOU MUST DO MANUALLY! ${NC}"
             fi
@@ -169,6 +169,28 @@ FUNC_CLONE_NODE_SETUP(){
     echo
     echo -e "Updating node size in .cfg file ..."
     echo
+
+    # Prompt for Chain if not provided as a variable
+    if [ -z "$VARVAL_CHAIN_NAME" ]; then
+
+        while true; do
+         read -p "Enter which chain your node is deployed on (e.g. mainnet or testnet): " _input
+
+            case $_input in
+                testnet )
+                    VARVAL_CHAIN_NAME="testnet"
+                    break
+                    ;;
+                mainnet )
+                    VARVAL_CHAIN_NAME="mainnet"
+                    break
+                    ;;
+                * ) echo "Please answer a valid option.";;
+            esac
+        done
+
+    fi
+
     if [ "$XAHAU_NODE_SIZE" != "tiny" ] && [ "$XAHAU_NODE_SIZE" != "medium" ] && [ "$XAHAU_NODE_SIZE" != "huge" ]; then
         echo -e "${BLUE}XAHAU_NODE_SIZE= not set in $SCRIPT_DIR/.env file."
         echo "Please choose an option:"
@@ -177,25 +199,27 @@ FUNC_CLONE_NODE_SETUP(){
         echo "3. huge = 32G+ RAM, no limit on HDD ${NC}"
         read -p "Enter your choice [1-3]: " choice
         
-        case $choice in
-            1) 
-                XAHAU_NODE_SIZE="tiny"
-                ;;
-            2) 
-                XAHAU_NODE_SIZE="medium"
-                ;;
-            3) 
-                XAHAU_NODE_SIZE="huge"
-                ;;
-            *) 
-                echo "Invalid option. Exiting."
-                FUNC_EXIT
-                ;;
-        esac
-        if grep -q 'XAHAU_NODE_SIZE=' "$SCRIPT_DIR/.env"; then
-            sed -i "s/^XAHAU_NODE_SIZE=.*/XAHAU_NODE_SIZE=\"$XAHAU_NODE_SIZE\"/" "$SCRIPT_DIR/.env"
-        else
-            echo -e "XAHAU_NODE_SIZE=\"$XAHAU_NODE_SIZE\"" >> $SCRIPT_DIR/.env
+            case $choice in
+                1) 
+                    XAHAU_NODE_SIZE="tiny"
+                    ;;
+                2) 
+                    XAHAU_NODE_SIZE="medium"
+                    ;;
+                3) 
+                    XAHAU_NODE_SIZE="huge"
+                    ;;
+                *) 
+                    echo "Invalid option. Exiting."
+                    FUNC_EXIT
+                    ;;
+            esac
+            if grep -q 'XAHAU_NODE_SIZE=' "$SCRIPT_DIR/.env"; then
+                sed -i "s/^XAHAU_NODE_SIZE=.*/XAHAU_NODE_SIZE=\"$XAHAU_NODE_SIZE\"/" "$SCRIPT_DIR/.env"
+            else
+                echo -e "XAHAU_NODE_SIZE=\"$XAHAU_NODE_SIZE\"" >> $SCRIPT_DIR/.env
+            fi
+
         fi
     
         if [ "$XAHAU_NODE_SIZE" == "tiny" ]; then
