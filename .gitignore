@@ -2,3 +2,4 @@
 /notes/**
 .DS_Store
 README.md.ignore
+nginx_allowlist.conf
