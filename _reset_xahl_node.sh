@@ -72,6 +72,7 @@ sudo rm -fv $NGX_CONF_AVAIL/xahau
 sudo rm -rfv /home/www
 
 # Remove and clean up nginx
+sudo rm -rfv $SCRIPT_DIR/nginx_allowlist.conf
 sudo rm -rfv /var/www
 sudo apt --purge remove fontconfig-config fonts-dejavu-core libdeflate0 \
     libfontconfig1 libgd3 libjbig0 libjpeg-turbo8 libjpeg8 libnginx-mod-http-geoip2 \
@@ -89,7 +90,7 @@ if [ -z $VARVAL_CHAIN_REPO ]; then
     echo -e "VARVAL_CHAIN_REPO is not defined for some reason. Exiting before I nuke the home folder."
     exit 1
 else
-    sudo rm -rfv ~/$SCRIPT_DIR/$VARVAL_CHAIN_REPO
+    sudo rm -rfv $SCRIPT_DIR/$VARVAL_CHAIN_REPO
 fi
 sudo userdel xahaud
 sudo rm -rfv /opt/xahaud
@@ -108,9 +109,6 @@ sudo apt --purge remove certbot python3-certbot-nginx python3-acme python3-certb
     python3-zope.event python3-zope.hookable -y
 #sudo mv -v ~/default.nginx /etc/nginx/sites-available/default
 sudo rm -rfv /var/log/letsencrypt
-
-# Clean up tmp
-sudo rm -rfv /tmp/{tmpcustom_403.html,tmpindex.html,tmpxahau,tmpxahau-logs,tmpxahau.toml,xahlsudotmp}
 
 echo
 echo
