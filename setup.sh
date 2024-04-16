@@ -36,7 +36,7 @@ else
           echo "Failed to execute the script with "root" user ID."
         fi
         # Prompt the user to enter a different user ID
-        read -e -p "${BLUE}Enter a user ID that has full sudo privledges :${NC}" SUDO_ID
+        read -p "Enter a user ID that has full sudo privledges :${NC}" SUDO_ID
 
         # Attempt to run the command with the specified user ID
         if su -c "./setup.sh $USER_ID" $SUDO_ID; then
@@ -82,7 +82,7 @@ FUNC_PKG_CHECK(){
 
     # update and upgrade the system
     if [ -z "$INSTALL_UPDATES" ]; then
-        read -e -p "${BLUE}do you want to check, and install OS updates? Enter true or false: ${NC}" INSTALL_UPDATES
+        read -p "do you want to check, and install OS updates? Enter true or false: ${NC}" INSTALL_UPDATES
         sed -i "s/^INSTALL_UPDATES=.*/INSTALL_UPDATES=\"$INSTALL_UPDATES\"/" $SCRIPT_DIR/xahl_node.vars
     fi
     if [ "$INSTALL_UPDATES" == "true" ]; then
@@ -296,7 +296,7 @@ FUNC_CERTBOT(){
     # Prompt for user email if not provided as a variable
     if [ -z "$CERT_EMAIL" ]; then
         echo
-        read -e -p "${BLUE}Enter your email address for certbot updates: ${NC}" CERT_EMAIL
+        read -p "Enter your email address for certbot updates: ${NC}" CERT_EMAIL
         sudo sed -i "s/^CERT_EMAIL=.*/CERT_EMAIL=\"$CERT_EMAIL\"/" $SCRIPT_DIR/.env
         echo
     fi
@@ -327,7 +327,7 @@ FUNC_LOGROTATE(){
     if [ -z "$VARVAL_CHAIN_NAME" ]; then
 
         while true; do
-         read -e -p "${BLUE}Enter which chain your node is deployed on (e.g. mainnet or testnet): ${NC}" _input
+         read -p "Enter which chain your node is deployed on (e.g. mainnet or testnet): ${NC}" _input
 
             case $_input in
                 testnet )
@@ -448,7 +448,7 @@ FUNC_INSTALL_LANDINGPAGE(){
     echo
 
     if [ -z "$INSTALL_LANDINGPAGE" ]; then
-        read -e -p "${BLUE}Do you want to (re)install the landng webpage?: true or false?${NC}" INSTALL_LANDINGPAGE
+        read -p "Do you want to (re)install the landng webpage?: true or false?${NC}" INSTALL_LANDINGPAGE
         sudo sed -i "s/^INSTALL_LANDINGPAGE=.*/INSTALL_LANDINGPAGE=\"$INSTALL_LANDINGPAGE\"/" $SCRIPT_DIR/xahl_node.vars
     fi
     if [ "$INSTALL_LANDINGPAGE" == "true" ]; then
@@ -627,7 +627,7 @@ h1 {
     <div class="serverinfo">
         <h1>Server Info</h1>
         <p><span style="color: orange;">THIS SERVER IS BLOCKING YOUR IP</span></p>
-        <p>Contact Email: gadget78@zerp.network</p>
+        <p>Contact Email: $TOML_EMAIL</p>
         <p>YourIP: <span id="realip"></p>
         <p>X-Real-IP: <span id="xrealip"></p>
         <p>-</p>
@@ -743,7 +743,7 @@ EOF
     fi
 
     if [ -z "$INSTALL_TOML" ]; then
-        read -e -p "${BLUE}Do you want to (re)install the default xahau.toml file?: true or false?${NC}" INSTALL_TOML
+        read -p "Do you want to (re)install the default xahau.toml file?: true or false?${NC}" INSTALL_TOML
         sudo sed -i "s/^INSTALL_TOML=.*/INSTALL_TOML=\"$INSTALL_TOML\"/" $SCRIPT_DIR/xahl_node.vars
     fi
     if [ "$INSTALL_TOML" == "true" ]; then
@@ -751,7 +751,7 @@ EOF
         # Prompt for user email if not provided as a variable
         if [ -z "$TOML_EMAIL" ]; then
             echo
-            read -e -p "${BLUE}Enter your email address for the PUBLIC .toml file: ${NC}" TOML_EMAIL
+            read -p "Enter your email address for the PUBLIC .toml file: ${NC}" TOML_EMAIL
             sudo sed -i "s/^TOML_EMAIL=.*/TOML_EMAIL=\"$TOML_EMAIL\"/" $SCRIPT_DIR/.env
             echo
         fi
@@ -905,7 +905,7 @@ FUNC_NODE_DEPLOY(){
         echo
         
         if [ -z "$INSTALL_UFW" ]; then
-            read -e -p "${BLUE}Do you want to install UFW (Uncomplicated Firewall) ? enter true or false: ${NC}" INSTALL_UFW
+            read -p "Do you want to install UFW (Uncomplicated Firewall) ? enter true or false: ${NC}" INSTALL_UFW
             sudo sed -i "s/^INSTALL_UFW=.*/INSTALL_UFW=\"$INSTALL_UFW\"/" $SCRIPT_DIR/xahl_node.vars
         fi
         if [ "$INSTALL_UFW" == "true" ]; then
@@ -930,7 +930,7 @@ FUNC_NODE_DEPLOY(){
 
     # Prompt for user domains if not provided as a variable
     if [ -z "$USER_DOMAIN" ]; then
-        read -e -p "${BLUE}Enter your servers domain (e.g. mydomain.com or a subdomain like xahau.mydomain.com ): ${NC}" USER_DOMAIN
+        read -p "Enter your servers domain (e.g. mydomain.com or a subdomain like xahau.mydomain.com ): ${NC}" USER_DOMAIN
         sudo sed -i "s/^USER_DOMAIN=.*/USER_DOMAIN=\"$USER_DOMAIN\"/" $SCRIPT_DIR/.env
     fi
 
@@ -1151,9 +1151,9 @@ EOF
     echo
     echo -e "${NC}if all went well, your Xahau Node will now be up and running, you can check; ${NC}"
     echo
-    echo -e "${NC}locally at, websocket ${BYELLOW}ws://$LOCAL_IP${NC} or RPC/API and website are ${BYELLOW}http://$LOCAL_IP ${NC}"
+    echo -e "${NC}locally at, websocket ${BYELLOW}ws://$LOCAL_IP${NC} or RPC/API and website at ${BYELLOW}http://$LOCAL_IP ${NC}"
     echo
-    echo -e "${NC}or externally at, websocket ${BYELLOW}wss://$USER_DOMAIN${NC} or RPC/API and website ${BYELLOW}https://$USER_DOMAIN ${NC}"
+    echo -e "${NC}or externally at, websocket ${BYELLOW}wss://$USER_DOMAIN${NC} or RPC/API and website at ${BYELLOW}https://$USER_DOMAIN ${NC}"
     echo
     echo -e "use file ${BYELLOW}'$SCRIPT_DIR/$NGINX_ALLOWLIST_FILE'${NC} to add/remove IP addresses that you want to have access to your submission node${NC}"
     echo -e "once file is edited and saved, run command ${BYELLOW}sudo nginx -s reload${NC} to apply new settings ${NC}"
