@@ -620,7 +620,7 @@ h1 {
     <div class="container">
         <h1>Server Info</h1>
         <p><span style="color: red;">THIS SERVER IS BLOCKING YOUR IP</span></p>
-        <p>Contact Email: $CERT_EMAIL</p>
+        <p>Contact Email: $TOML_EMAIL</p>
         <p>YourIP: <span id="realip"></p>
         <p>X-Real-IP: <span id="xrealip"></p>
         <p>-</p>
