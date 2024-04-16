@@ -415,24 +415,31 @@ FUNC_ALLOWLIST_CHECK(){
 
     echo "Adding default IPs..."
     echo
-    if ! grep -q "allow $SRC_IP;  # Detected IP of the SSH session" "$SCRIPT_DIR/nginx_allowlist.conf"; then
-        echo "allow $SRC_IP;  # Detected IP of the SSH session" >> $SCRIPT_DIR/nginx_allowlist.conf
-        echo "added IP $SRC_IP;  # Detected IP of the SSH session"
+    
+    if [ -f "$SCRIPT_DIR/nginx_allowlist.conf" ]; then
+        echo -e "Default IPs already found in allowlist file."
     else
-        echo "SSH session IP, $SRC_IP, already in list."
+        touch "$SCRIPT_DIR/nginx_allowlist.conf"
+        if ! grep -q "allow $SRC_IP;    # Detected IP of the SSH session" "$SCRIPT_DIR/nginx_allowlist.conf"; then
+            echo "allow $SRC_IP;    # Detected IP of the SSH session" >> $SCRIPT_DIR/nginx_allowlist.conf
+            echo "added IP $SRC_IP;     # Detected IP of the SSH session"
+        else
+            echo "SSH session IP, $SRC_IP, already in list."
+        fi
+        if ! grep -q "allow $LOCAL_IP;  # Local IP of server" "$SCRIPT_DIR/nginx_allowlist.conf"; then
+            echo "allow $LOCAL_IP;  # Local IP of server" >> $SCRIPT_DIR/nginx_allowlist.conf
+            echo "added IP $LOCAL_IP;   # Local IP of the server"
+        else
+            echo "Local IP of the server, $LOCAL_IP, already in list."
+        fi
+        if ! grep -q "allow $NODE_IP;   # ExternalIP of the Node itself" "$SCRIPT_DIR/nginx_allowlist.conf"; then
+            echo "allow $NODE_IP;   # ExternalIP of the Node itself" >> $SCRIPT_DIR/nginx_allowlist.conf
+            echo "added IP $NODE_IP;    # ExternalIP of the Node itself"
+        else
+            echo "External IP of the Node itself, $NODE_IP, already in list."
+        fi
     fi
-    if ! grep -q "allow $LOCAL_IP; # Local IP of server" "$SCRIPT_DIR/nginx_allowlist.conf"; then
-        echo "allow $LOCAL_IP; # Local IP of server" >> $SCRIPT_DIR/nginx_allowlist.conf
-        echo "added IP $LOCAL_IP; # Local IP of the server"
-    else
-        echo "Local IP of the server, $LOCAL_IP, already in list."
-    fi
-    if ! grep -q "allow $NODE_IP;  # ExternalIP of the Node itself" "$SCRIPT_DIR/nginx_allowlist.conf"; then
-        echo "allow $NODE_IP;  # ExternalIP of the Node itself" >> $SCRIPT_DIR/nginx_allowlist.conf
-        echo "added IP $NODE_IP;  # ExternalIP of the Node itself"
-    else
-        echo "External IP of the Node itself, $NODE_IP, already in list."
-    fi
+
     echo
     echo
     echo -e "${BLUE}Add additional IPs to the Allowlist, or press enter to skip... ${NC}"

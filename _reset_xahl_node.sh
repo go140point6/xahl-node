@@ -10,7 +10,7 @@ NC='\033[0m' # No Color
     echo -e "${RED}"
     echo -e "${RED}        !!  WARNING  !!${NC} Xahaud Reset Script ${RED}!!  WARNING  !!${NC}"
     echo -e "${RED}"
-    echo -e "${RED}        Not recommended for production use, used to mainly for testing script setup.${NC}"
+    echo -e "${RED}        Not recommended for production use, used for testing script setup.${NC}"
     echo -e "${RED}#########################################################################"
     echo -e "${RED}#########################################################################${NC}"
     echo
