@@ -394,7 +394,7 @@ FUNC_ALLOWLIST_CHECK(){
 
     # Get some source IPs
     #current SSH session
-    SRC_IP=$(echo $SSH_CONNECTION | awk '{print $1}')
+    SRC_IP=$(who am i | grep -oP '\(\K[^\)]+')
     if [ -z "$SRC_IP" ]; then
         SRC_IP="127.0.0.1"
     fi
