@@ -45,6 +45,12 @@ sudo -l > /dev/null 2>&1
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 source $SCRIPT_DIR/xahl_node.vars
 
+echo -e "${YELLOW}$USER_DNS_RECORDS${NC}"
+
+IFS=',' read -ra DOMAINS_ARRAY <<< "$USER_DNS_RECORDS"
+A_RECORD="${DOMAINS_ARRAY[0]}"
+CNAME_RECORD1="${DOMAINS_ARRAY[1]}"
+CNAME_RECORD2="${DOMAINS_ARRAY[2]}" 
 
 if [ $VARVAL_CHAIN_NAME = "mainnet" ]; then
     VARVAL_CHAIN_PEER="$XAHL_MAINNET_PEER"
@@ -82,7 +88,7 @@ sudo apt --purge remove fontconfig-config fonts-dejavu-core libdeflate0 \
 # Remove firewall rules
 sudo ufw delete allow $VARVAL_CHAIN_PEER/tcp
 sudo ufw delete allow 'Nginx Full'
-sudo ufw status --no-pager verbose
+sudo ufw status verbose
 
 # Remove and clean up xahaud
 echo -e $VARVAL_CHAIN_REPO
@@ -108,6 +114,10 @@ sudo apt --purge remove certbot python3-certbot-nginx python3-acme python3-certb
     python3-requests-toolbelt python3-rfc3339 python3-tz python3-urllib3 python3-zope.component \
     python3-zope.event python3-zope.hookable -y
 sudo rm -rfv /var/log/letsencrypt
+
+# Clean up files in home directory
+sudo rm -rfv $SCRIPT_DIR/$NGINX_RPC_ALLOWLIST
+sudo rm -rfv $SCRIPT_DIR/$NGINX_WSS_ALLOWLIST
 
 echo
 echo

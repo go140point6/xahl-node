@@ -195,16 +195,16 @@ FUNC_CLONE_NODE_SETUP(){
     echo -e "Updating node size in .cfg file ..."
     echo
 
-    if [ "$XAHAU_NODE_SIZE" === "tiny" ]; then
+    if [ "$XAHAU_NODE_SIZE" = "tiny" ]; then
         XAHAU_LEDGER_HISTORY=$TINY_LEDGER_HISTORY
         XAHAU_ONLINE_DELETE=$TINY_LEDGER_DELETE
-    elif [ "$XAHAU_NODE_SIZE" === "small" ]; then
+    elif [ "$XAHAU_NODE_SIZE" = "small" ]; then
         XAHAU_LEDGER_HISTORY=$SMALL_LEDGER_HISTORY
         XAHAU_ONLINE_DELETE=$SMALL_LEDGER_DELETE
-    elif [ "$XAHAU_NODE_SIZE" === "medium" ]; then
+    elif [ "$XAHAU_NODE_SIZE" = "medium" ]; then
         XAHAU_LEDGER_HISTORY=$MEDIUM_LEDGER_HISTORY
         XAHAU_ONLINE_DELETE=$MEDIUM_LEDGER_DELETE
-    elif [ "$XAHAU_NODE_SIZE" === "huge" ]; then
+    elif [ "$XAHAU_NODE_SIZE" = "huge" ]; then
         XAHAU_LEDGER_HISTORY=$HUGE_LEDGER_HISTORY
         XAHAU_ONLINE_DELETE=$HUGE_LEDGER_DELETE
     fi
@@ -281,7 +281,7 @@ FUNC_SETUP_UFW_PORTS(){
     echo -e "current Xahau Node port number detected as: ${BYELLOW}$VARVAL_CHAIN_PEER${NC}"
     sudo ufw allow $CPORT/tcp
     sudo ufw allow $VARVAL_CHAIN_PEER/tcp
-    sudo ufw status --no-pager verbose
+    sudo ufw status verbose
     sleep 2s
 }
 
