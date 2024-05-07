@@ -734,8 +734,8 @@ server {
     server_name $CNAME_RECORD1;
 
     # SSL certificate paths
-    ssl_certificate /etc/letsencrypt/live/$$A_RECORD/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/$$A_RECORD/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/$A_RECORD/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/$A_RECORD/privkey.pem;
 
     # Other SSL settings
     ssl_protocols TLSv1.3 TLSv1.2;
@@ -791,8 +791,8 @@ server {
     server_name $CNAME_RECORD2;
 
     # SSL certificate paths
-    ssl_certificate /etc/letsencrypt/live/$$A_RECORD/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/$$A_RECORD/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/$A_RECORD/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/$A_RECORD/privkey.pem;
 
     # Other SSL settings
     ssl_protocols TLSv1.3 TLSv1.2;
@@ -832,7 +832,7 @@ server {
 
         # These three are critical to getting websockets to work
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection "upgrade";
     }
 
