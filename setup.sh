@@ -636,7 +636,7 @@ FUNC_NODE_DEPLOY(){
 
     # installs updates, and default packages listed in vars file
     FUNC_CHECK_VARS;
-    FUNC_EXIT;
+    #FUNC_EXIT;
 
     FUNC_PKG_CHECK;
     #FUNC_EXIT;
@@ -898,6 +898,8 @@ SIGINT_EXIT(){
 
 FUNC_EXIT(){
     # remove the sudo timeout for USER_ID.
+    echo -e
+    echo -e "${GREEN}Performing clean-up:${NC}"
     sudo sh -c "rm -fv /etc/sudoers.d/$TMP_FILENAME01"
     bash ~/.profile
     sudo -u $USER_ID sh -c 'bash ~/.profile'
