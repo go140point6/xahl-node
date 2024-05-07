@@ -82,7 +82,7 @@ sudo apt --purge remove fontconfig-config fonts-dejavu-core libdeflate0 \
 # Remove firewall rules
 sudo ufw delete allow $VARVAL_CHAIN_PEER/tcp
 sudo ufw delete allow 'Nginx Full'
-sudo ufw status verbose
+sudo ufw status --no-pager verbose
 
 # Remove and clean up xahaud
 echo -e $VARVAL_CHAIN_REPO
@@ -102,12 +102,11 @@ sudo rm -rfv /etc/logrotate.d/nginx
 sudo rm -rfv /etc/logrotate.d/xahau-logs
 
 # Remove and clean up certbot
-sudo certbot revoke --cert-path /etc/letsencrypt/live/$USER_DOMAIN/fullchain.pem --non-interactive
+sudo certbot revoke --cert-path /etc/letsencrypt/live/$A_RECORD/fullchain.pem --non-interactive
 sudo apt --purge remove certbot python3-certbot-nginx python3-acme python3-certbot python3-certifi \
     python3-configargparse python3-icu python3-josepy python3-parsedatetime python3-requests \
     python3-requests-toolbelt python3-rfc3339 python3-tz python3-urllib3 python3-zope.component \
     python3-zope.event python3-zope.hookable -y
-#sudo mv -v ~/default.nginx /etc/nginx/sites-available/default
 sudo rm -rfv /var/log/letsencrypt
 
 echo
