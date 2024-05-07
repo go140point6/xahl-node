@@ -67,7 +67,7 @@ source $SCRIPT_DIR/xahl_node.vars
 FDATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 
-FUNC_CHECK_VARS() {
+FUNC_CHECK_VARS(){
     echo -e "${GREEN}#########################################################################${NC}"
     echo
     echo -e "${GREEN}## Check for properly configured xahl_node.vars file...${NC}"
@@ -86,22 +86,26 @@ FUNC_CHECK_VARS() {
     if [ -n "$ERROR1" ]; then
         echo -e "${YELLOW}$ERROR1${NC}"
         echo -e
+    fi
     if [ -n "$ERROR2" ]; then
         echo -e "${YELLOW}$ERROR2${NC}"
         echo -e
+    fi
     if [ -n "$ERROR3" ]; then
         echo -e "${YELLOW}$ERROR3${NC}"
         echo -e
+    fi
     if [ -n "$ERROR4" ]; then
         echo -e "${YELLOW}$ERROR4${NC}"
         echo -e
-
+    fi
     if [ -n "$ERROR1" || -n "$ERROR2" || -n "$ERROR3" || -n "$ERROR4" ]; then
         echo -e ${RED}You must fix the errors above before running this script.${NC}
         FUNC_EXIT_ERROR
     else
         echo -e "${GREEN}xahl-node.vars appears to be correctly configured, continuing...${NC}"
         sleep 2
+    fi
 }
 
 
@@ -239,8 +243,10 @@ FUNC_SETUP_UFW(){
             FUNC_UFW_LOGGING
         else
             echo -e "UFW is installed but not running. This is ${RED}NOT GOOD${NC} unless you have other protection in place. Skipping UFW configuration..."
+        fi
     else
         echo -e "UFW is not installed. This is ${RED}NOT GOOD${NC} unless you have other protection in place. Skipping UFW configuration..."
+    fi
 }
 
 FUNC_UFW_LOGGING(){
@@ -288,9 +294,9 @@ FUNC_CERTBOT(){
     # Install Let's Encrypt Certbot
     sudo apt install certbot python3-certbot-nginx -y
 
-    echo -e "${YELLOW}$USER_DOMAINS${NC}"
+    echo -e "${YELLOW}$USER_DNS_RECORDS${NC}"
 
-    IFS=',' read -ra DOMAINS_ARRAY <<< "$USER_DOMAINS"
+    IFS=',' read -ra DOMAINS_ARRAY <<< "$USER_DNS_RECORDS"
     A_RECORD="${DOMAINS_ARRAY[0]}"
     CNAME_RECORD1="${DOMAINS_ARRAY[1]}"
     CNAME_RECORD2="${DOMAINS_ARRAY[2]}" 
@@ -300,7 +306,7 @@ FUNC_CERTBOT(){
     #sudo systemctl enable nginx
 
     # Request and install a Let's Encrypt SSL/TLS certificate for Nginx
-    sudo certbot --nginx  -m "$CERT_EMAIL" -n --agree-tos -d "$USER_DOMAINS"
+    sudo certbot --nginx  -m "$CERT_EMAIL" -n --agree-tos -d "$USER_DNS_RECORDS"
 
     echo
     echo -e "${GREEN}#########################################################################${NC}"
