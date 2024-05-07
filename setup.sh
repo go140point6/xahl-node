@@ -99,7 +99,7 @@ FUNC_CHECK_VARS(){
         echo -e "${YELLOW}$ERROR4${NC}"
         echo -e
     fi
-    if [ -n "$ERROR1" || -n "$ERROR2" || -n "$ERROR3" || -n "$ERROR4" ]; then
+    if [ -n "$ERROR1" ] || [ -n "$ERROR2" ] || [ -n "$ERROR3" ] || [ -n "$ERROR4" ]; then
         echo -e ${RED}You must fix the errors above before running this script.${NC}
         FUNC_EXIT_ERROR
     else
