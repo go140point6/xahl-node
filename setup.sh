@@ -1,15 +1,16 @@
 #!/bin/bash
 
-
 # Get current user id and store as var
 USER_ID=$(getent passwd $EUID | cut -d: -f1)
 
 # Authenticate sudo perms before script execution to avoid timeouts or errors
 sudo -l > /dev/null 2>&1
 
-# Set the sudo timeout for USER_ID to expire on reboot instead of default 5mins
-echo "Defaults:$USER_ID timestamp_timeout=-1" > /tmp/xahlsudotmp
-sudo sh -c 'cat /tmp/xahlsudotmp > /etc/sudoers.d/xahlnode_deploy'
+# Extend sudo timeout for USER_ID to 20 minutes, instead of default 5min
+TMP_FILE01=$(mktemp)
+TMP_FILENAME01=$(basename $TMP_FILE01)
+echo "Defaults:$USER_ID timestamp_timeout=20" > $TMP_FILE01
+sudo sh -c "cat $TMP_FILE01 > /etc/sudoers.d/$TMP_FILENAME01"
 
 # Set Colour Vars
 GREEN='\033[0;32m'
@@ -17,11 +18,14 @@ GREEN='\033[0;32m'
 RED='\033[0;91m'  # Intense Red
 YELLOW='\033[0;33m'
 BYELLOW='\033[1;33m'
+BLUE='\033[0;94m'
 NC='\033[0m' # No Color
 
-FDATE=$(date +"%Y_%m_%d_%H_%M")
+# Get the absolute path of the script directory
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+source $SCRIPT_DIR/xahl_node.vars
 
-source xahl_node.vars
+FDATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 
 FUNC_PKG_CHECK(){
@@ -30,8 +34,6 @@ FUNC_PKG_CHECK(){
     echo
     echo -e "${GREEN}## CHECK NECESSARY PACKAGES HAVE BEEN INSTALLED...${NC}"
     echo     
-
-    #sudo apt update -y && sudo apt upgrade -y
 
     for i in "${SYS_PACKAGES[@]}"
     do
@@ -44,6 +46,20 @@ FUNC_PKG_CHECK(){
     done
 }
 
+FUNC_CHECK_VARS() {
+    echo -e "${GREEN}#########################################################################${NC}"
+    echo
+    echo -e "${GREEN}## Check for properly configured xahl_node.vars file...${NC}"
+    echo     
+
+    if [ "$USER_DNS_RECORDS" === "xahl.EXAMPLE.com,rpc.EXAMPLE.com,wss.EXAMPLE.com" ]; then
+        ERROR1 = "USER_DNS_RECORDS appears to be using sample data in xahl_node.vars."
+    elif [ "CERT_EMAIL" === "yourRealEmailAddress@EXAMPLE.com" ]; then
+        ERROR2 = "CERT_EMAIL appears to be using sample data in xahl_node.vars."
+    elif [ "$XAHAU_NODE_SIZE" !== "tiny" ] || [ "$XAHAU_NODE_SIZE" !== "small" ] || [ "$XAHAU_NODE_SIZE" !== "medium" ] || [ "$XAHAU_NODE_SIZE" !== "huge" ]; then
+        ERROR3 = "XAHAU_NODE_SIZE appears to be using some value that is not valid in xahl_node.vars."
+    fi
+}
 
 FUNC_CLONE_NODE_SETUP(){
 
@@ -62,7 +78,6 @@ FUNC_CLONE_NODE_SETUP(){
 
     sleep 3s
 
-    #sleep 3s
     echo 
     echo -e "${YELLOW}Starting Xahau Node install ...${NC}"
     sudo ./xahaud-install-update.sh
@@ -75,19 +90,19 @@ FUNC_CLONE_NODE_SETUP(){
         sudo sed -i -E '/^\[port_ws_public\]$/,/^\[/ s/^(ip = )0\.0\.0\.0/\1127.0.0.1/' /opt/xahaud/etc/xahaud.cfg
         sleep 2
         if grep -q "ip = 127.0.0.1" "/opt/xahaud/etc/xahaud.cfg"; then
-            echo -e "${GREEN}It appears that [port_ws_public] was able to update correctly."
+            echo -e "${GREEN}It appears that [port_ws_public] was able to update correctly.${NC}"
         else
-            echo -e "${RED}Something wrong with updating [port_ws_public] ip in /opt/xahaud/etc/xahaud.cfg. Attempting second time..."
+            echo -e "${RED}Something wrong with updating [port_ws_public] ip in /opt/xahaud/etc/xahaud.cfg. Attempting second time...${NC}"
             sudo sed -i -E '/^\[port_ws_public\]$/,/^\[/ s/^(ip = )0\.0\.0\.0/\1127.0.0.1/' /opt/xahaud/etc/xahaud.cfg
             sleep 2
             if grep -q "ip = 127.0.0.1" "/opt/xahaud/etc/xahaud.cfg"; then
-                echo -e "${GREEN}It appears that [port_ws_public] was able to update correctly on the second attempt."
+                echo -e "${GREEN}It appears that [port_ws_public] was able to update correctly on the second attempt.${NC}"
             else
-                echo -e "${RED}Something wrong with updating [port_ws_public] ip in /opt/xahaud/etc/xahaud.cfg. YOU MUST DO MANUALLY!"
+                echo -e "${RED}Something wrong with updating [port_ws_public] ip in /opt/xahaud/etc/xahaud.cfg. YOU MUST DO MANUALLY!${NC}"
             fi
         fi
     else
-        echo -e "${RED}Something wrong with updating [port_ws_public] ip in /opt/xahaud/etc/xahaud.cfg. YOU MUST DO MANUALLY!"
+        echo -e "${RED}Something wrong with updating [port_ws_public] ip in /opt/xahaud/etc/xahaud.cfg. YOU MUST DO MANUALLY!${NC}"
     fi
 
     
@@ -98,27 +113,58 @@ FUNC_CLONE_NODE_SETUP(){
         sudo sed -i -E '/^\[port_rpc_public\]$/,/^\[/ s/^(ip = )0\.0\.0\.0/\1127.0.0.1/' /opt/xahaud/etc/xahaud.cfg
         sleep 2
         if grep -q "ip = 127.0.0.1" "/opt/xahaud/etc/xahaud.cfg"; then
-            echo -e "${GREEN}It appears that [port_rpc_public] was able to update correctly."
+            echo -e "${GREEN}It appears that [port_rpc_public] was able to update correctly.${NC}"
         else
-            echo -e "${RED}Something wrong with updating [port_rpc_public] ip in /opt/xahaud/etc/xahaud.cfg. Attempting second time..."
+            echo -e "${RED}Something wrong with updating [port_rpc_public] ip in /opt/xahaud/etc/xahaud.cfg. Attempting second time...${NC}"
             sudo sed -i -E '/^\[port_rpc_public\]$/,/^\[/ s/^(ip = )0\.0\.0\.0/\1127.0.0.1/' /opt/xahaud/etc/xahaud.cfg
             sleep 2
             if grep -q "ip = 127.0.0.1" "/opt/xahaud/etc/xahaud.cfg"; then
-                echo -e "${GREEN}It appears that [port_rpc_public] was able to update correctly on the second attempt."
+                echo -e "${GREEN}It appears that [port_rpc_public] was able to update correctly on the second attempt.${NC}"
             else
-                echo -e "${RED}Something wrong with updating [port_rpc_public] ip in /opt/xahaud/etc/xahaud.cfg. YOU MUST DO MANUALLY!"
+                echo -e "${RED}Something wrong with updating [port_rpc_public] ip in /opt/xahaud/etc/xahaud.cfg. YOU MUST DO MANUALLY!${NC}"
             fi
         fi
     else
-        echo -e "${RED}Something wrong with updating [port_rpc_public] ip in /opt/xahaud/etc/xahaud.cfg. YOU MUST DO MANUALLY!"
+        echo -e "${RED}Something wrong with updating [port_rpc_public] ip in /opt/xahaud/etc/xahaud.cfg. YOU MUST DO MANUALLY!${NC}"
     fi
 
-    sleep 2s
+    echo
+    echo -e "Updating node size in .cfg file ..."
+    echo
+
+    if [ "$XAHAU_NODE_SIZE" === "tiny" ]; then
+        XAHAU_LEDGER_HISTORY=$TINY_LEDGER_HISTORY
+        XAHAU_ONLINE_DELETE=$TINY_LEDGER_DELETE
+    elif [ "$XAHAU_NODE_SIZE" === "small" ]; then
+        XAHAU_LEDGER_HISTORY=$SMALL_LEDGER_HISTORY
+        XAHAU_ONLINE_DELETE=$SMALL_LEDGER_DELETE
+    elif [ "$XAHAU_NODE_SIZE" === "medium" ]; then
+        XAHAU_LEDGER_HISTORY=$MEDIUM_LEDGER_HISTORY
+        XAHAU_ONLINE_DELETE=$MEDIUM_LEDGER_DELETE
+    elif [ "$XAHAU_NODE_SIZE" === "huge" ]; then
+        XAHAU_LEDGER_HISTORY=$HUGE_LEDGER_HISTORY
+        XAHAU_ONLINE_DELETE=$HUGE_LEDGER_DELETE
+    fi
+
+    echo ".setting node_size."
+    sudo sed -i "/^\[node_size\]/!b;n;c$XAHAU_NODE_SIZE" /opt/xahaud/etc/xahaud.cfg
+    echo "..setting ledger_history.."
+    sudo sed -i -e 's/^#\{0,1\}\(\[ledger_history\]\)/\1/; /^\[ledger_history\]/ { n; s/.*/'"$XAHAU_LEDGER_HISTORY"'/; }' /opt/xahaud/etc/xahaud.cfg   
+    echo "...setting online_delete..."
+    grep -q 'online_delete' /opt/xahaud/etc/xahaud.cfg || sudo sed -i '/^online_delete.*/!{ /\[node_db\]/ s/$/\nonline_delete='"$XAHAU_ONLINE_DELETE"'/ }' /opt/xahaud/etc/xahaud.cfg
+    sudo sed -i "s/online_delete=.*/online_delete=$XAHAU_ONLINE_DELETE/" /opt/xahaud/etc/xahaud.cfg
+    echo ".....done...."
+
     sudo systemctl restart xahaud.service
     sleep 2s
+    echo -e 
+    echo -e "Config changed to ${BYELLOW}$XAHAU_NODE_SIZE${NC} with ledger_history=${BYELLOW}$XAHAU_LEDGER_HISTORY${NC} online_delete=${BYELLOW}$XAHAU_ONLINE_DELETE ${NC}"
+    echo -e
+    echo -e "${GREEN}## Finished Xahau Node install ...${NC}"
+    echo -e
+    sleep 4s
     #FUNC_EXIT
 }
-
 
 
 FUNC_SETUP_UFW_PORTS(){
@@ -134,7 +180,7 @@ FUNC_SETUP_UFW_PORTS(){
     #echo $CPORT
     sudo ufw allow $CPORT/tcp
     sudo ufw allow $VARVAL_CHAIN_PEER/tcp
-    sudo ufw status verbose
+    sudo ufw status --no-pager verbose
     sleep 2s
 }
 
@@ -157,13 +203,12 @@ FUNC_ENABLE_UFW(){
     echo 
     echo -e "${YELLOW}## Setup: Enable Firewall...${NC}"
     echo 
-    sudo systemctl start ufw && sudo systemctl status ufw
+    sudo systemctl start ufw && sudo systemctl status --no-pager ufw
     sleep 2s
     echo "y" | sudo ufw enable
     #sudo ufw enable
-    sudo ufw status verbose
+    sudo ufw status --no-pager verbose
 }
-
 
 
 FUNC_CERTBOT(){
@@ -171,17 +216,6 @@ FUNC_CERTBOT(){
 
     # Install Let's Encrypt Certbot
     sudo apt install certbot python3-certbot-nginx -y
-
-    # Prompt for user domains if not provided as a variable
-    if [ -z "$USER_DOMAINS" ]; then
-        read -p "Enter a comma-separated list of domains, A record followed by CNAME records for RPC & WSS (e.g., server.mydomain.com,rpc.mydomain.com,wss.mydomain.com): " USER_DOMAINS
-    fi
-
-
-    # Prompt for user email if not provided as a variable
-    if [ -z "$CERT_EMAIL" ]; then
-        read -p "Enter your email address for certbot updates: " CERT_EMAIL
-    fi
 
     echo -e "${YELLOW}$USER_DOMAINS${NC}"
 
@@ -200,8 +234,6 @@ FUNC_CERTBOT(){
 }
 
 
-
-
 FUNC_LOGROTATE(){
     # add the logrotate conf file
     # check logrotate status = cat /var/lib/logrotate/status
@@ -212,34 +244,13 @@ FUNC_LOGROTATE(){
 
     USER_ID=$(getent passwd $EUID | cut -d: -f1)
 
-
-    # Prompt for Chain if not provided as a variable
-    if [ -z "$VARVAL_CHAIN_NAME" ]; then
-
-        while true; do
-         read -p "Enter which chain your node is deployed on (e.g. mainnet or testnet): " _input
-
-            case $_input in
-                testnet )
-                    VARVAL_CHAIN_NAME="testnet"
-                    break
-                    ;;
-                mainnet )
-                    VARVAL_CHAIN_NAME="mainnet"
-                    break
-                    ;;
-                * ) echo "Please answer a valid option.";;
-            esac
-        done
-
-    fi
-
-        cat <<EOF > /tmp/tmpxinfin-logs
+    TMP_FILE02=$(mktemp)
+    cat <<EOF > $TMP_FILE02
 /opt/xahaud/log/*.log
         {
             su $USER_ID $USER_ID
             size 100M
-            rotate 50
+            rotate 10
             copytruncate
             daily
             missingok
@@ -253,14 +264,72 @@ FUNC_LOGROTATE(){
         }    
 EOF
 
-    sudo sh -c 'cat /tmp/tmpxinfin-logs > /etc/logrotate.d/xahau-logs'
+    sudo sh -c 'cat $TMP_FILE02 > /etc/logrotate.d/xahau-logs'
 
 }
 
+FUNC_ALLOWLIST_CHECK(){
+    echo
+    echo -e "${GREEN}#########################################################################${NC}"
+    echo
+    echo -e "${GREEN}## ${YELLOW}Setup: checking/setting up IPs, ALLOWLIST file...${NC}"
+    echo
 
+    # Get some source IPs
+    #current SSH session
+    SRC_IP=$(who am i | grep -oP '\(\K[^\)]+')
+    if [ -z "$SRC_IP" ]; then
+        SRC_IP="127.0.0.1"
+    fi
+    #this Nodes IP
+    NODE_IP=$(curl -s ipinfo.io/ip)
+    if [ -z "$NODE_IP" ]; then
+        NODE_IP="127.0.0.1"
+    fi
+    #dockers IP
+    #DCKR_HOST_IP=$(sudo docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $VARVAL_CHAIN_NAME_xinfinnetwork_1)
+    LOCAL_IP=$(hostname -I | awk '{print $1}')
+    if [ -z "$LOCAL_IP" ]; then
+        LOCAL_IP="127.0.0.1"
+    fi
 
+    echo "Adding default IPs..."
+    echo
+    
+    if [ -f "$SCRIPT_DIR/nginx_allowlist.conf" ]; then
+        echo -e "The 'nginx_allowlist.conf' file already exsits at this location, no default changes..."
+    else
+        echo "allow $SRC_IP; # Detected IP of the SSH session" >> $SCRIPT_DIR/nginx_allowlist.conf
+        echo -e "added IP $SRC_IP; # Detected IP of the SSH session"
+      
+        echo "allow $LOCAL_IP; # Local IP of server" >> $SCRIPT_DIR/nginx_allowlist.conf
+        echo -e "added IP $LOCAL_IP; # Local IP of the server"
 
+        echo "allow $NODE_IP; # ExternalIP of the Node itself" >> $SCRIPT_DIR/nginx_allowlist.conf
+        echo -e "added IP $NODE_IP; # ExternalIP of the Node itself"
+    fi
 
+    echo
+    echo
+    echo -e "${BLUE}Add additional IPs to the Allowlist, or press enter to skip... ${NC}"
+    echo
+    while true; do
+        read -p "Enter an additional IP address here (one at a time, for example 10.0.0.20): " user_ip
+
+        # Validate the input using regex (IPv4 format)
+        if [[ $user_ip =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+            echo -e "${GREEN}IP address: ${YELLOW}$user_ip added to Allow list. ${NC}"
+            echo -e "allow $user_ip;" >> $SCRIPT_DIR/nginx_allowlist.conf
+        else
+            if [ -z "$user_ip" ]; then
+                break
+            else
+                echo -e "${RED}Invalid IP address. Please try again. ${NC}"
+            fi
+        fi
+    done
+    sleep 2s
+}
 
 
 FUNC_NODE_DEPLOY(){
