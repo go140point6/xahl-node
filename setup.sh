@@ -73,14 +73,14 @@ FUNC_CHECK_VARS(){
     echo -e "${GREEN}## Check for properly configured xahl_node.vars file...${NC}"
     echo     
 
-    if [ "$USER_DNS_RECORDS" === "xahl.EXAMPLE.com,rpc.EXAMPLE.com,wss.EXAMPLE.com" ]; then
-        ERROR1 = "USER_DNS_RECORDS appears to be using sample data in xahl_node.vars."
-    elif [ "CERT_EMAIL" === "yourRealEmailAddress@EXAMPLE.com" ]; then
-        ERROR2 = "CERT_EMAIL appears to be using sample data in xahl_node.vars."
-    elif [ "$XAHAU_NODE_SIZE" !== "tiny" ] || [ "$XAHAU_NODE_SIZE" !== "small" ] || [ "$XAHAU_NODE_SIZE" !== "medium" ] || [ "$XAHAU_NODE_SIZE" !== "huge" ]; then
-        ERROR3 = "XAHAU_NODE_SIZE appears to be using some value that is not valid in xahl_node.vars."
-    elif [ "$VARVAL_CHAIN_NAME" !== 'mainnet' ] || [ "$VARVAL_CHAIN_NAME" !== 'testnet' ]; then
-        ERROR4 = "VARVAL_CHAIN_NAME appears to be set incorrectly, valid options are mainnet or testnet ONLY."
+    if [ "$USER_DNS_RECORDS" = "xahl.EXAMPLE.com,rpc.EXAMPLE.com,wss.EXAMPLE.com" ]; then
+        ERROR1="USER_DNS_RECORDS appears to be using sample data in xahl_node.vars."
+    elif [ "$CERT_EMAIL" = "yourRealEmailAddress@EXAMPLE.com" ]; then
+        ERROR2="CERT_EMAIL appears to be using sample data in xahl_node.vars."
+    elif [ "$XAHAU_NODE_SIZE" != "tiny" ] && [ "$XAHAU_NODE_SIZE" != "small" ] && [ "$XAHAU_NODE_SIZE" != "medium" ] && [ "$XAHAU_NODE_SIZE" != "huge" ]; then
+        ERROR3="XAHAU_NODE_SIZE appears to be using some value that is not valid in xahl_node.vars."
+    elif [ "$VARVAL_CHAIN_NAME" != 'mainnet' ] && [ "$VARVAL_CHAIN_NAME" != 'testnet' ]; then
+        ERROR4="VARVAL_CHAIN_NAME appears to be set incorrectly, valid options are mainnet or testnet ONLY."
     fi
 
     if [ -n "$ERROR1" ]; then
