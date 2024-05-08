@@ -371,23 +371,23 @@ FUNC_ALLOWLIST_CHECK(){
     echo "Adding default IPs to both rpc and wss files..."
     echo
     
-    if [ -f "~/$NGINX_RPC_ALLOWLIST" ]; then
+    if [ -f "$SCRIPT_DIR/$NGINX_RPC_ALLOWLIST" ]; then
         echo -e "The `$NGINX_RPC_ALLOWLIST` file already exsits at this location, no default changes..."
     else
-        echo "allow $SRC_IP; # Detected IP of the SSH session" >> ~/$NGINX_RPC_ALLOWLIST
+        echo "allow $SRC_IP; # Detected IP of the SSH session" >> $SCRIPT_DIR/$NGINX_RPC_ALLOWLIST
         echo -e "added IP $SRC_IP; # Detected IP of the SSH session"
       
-        echo "allow $NODE_IP; # ExternalIP of the Node itself" >> ~/$NGINX_RPC_ALLOWLIST
+        echo "allow $NODE_IP; # ExternalIP of the Node itself" >> $SCRIPT_DIR/$NGINX_RPC_ALLOWLIST
         echo -e "added IP $NODE_IP; # ExternalIP of the Node itself"
     fi
 
-    if [ -f "~/$NGINX_WSS_ALLOWLIST" ]; then
+    if [ -f "$SCRIPT_DIR/$NGINX_WSS_ALLOWLIST" ]; then
         echo -e "The `$NGINX_WSS_ALLOWLIST` file already exsits at this location, no default changes..."
     else
-        echo "allow $SRC_IP; # Detected IP of the SSH session" >> ~/$NGINX_WSS_ALLOWLIST
+        echo "allow $SRC_IP; # Detected IP of the SSH session" >> $SCRIPT_DIR/$NGINX_WSS_ALLOWLIST
         echo -e "added IP $SRC_IP; # Detected IP of the SSH session"
 
-        echo "allow $NODE_IP; # ExternalIP of the Node itself" >> ~/$NGINX_WSS_ALLOWLIST
+        echo "allow $NODE_IP; # ExternalIP of the Node itself" >> $SCRIPT_DIR/$NGINX_WSS_ALLOWLIST
         echo -e "added IP $NODE_IP; # ExternalIP of the Node itself"
     fi
 
@@ -536,7 +536,7 @@ server {
     
     location / {
         try_files \$uri \$uri/ =404;
-        include ~/$NGINX_RPC_ALLOWLIST;
+        include $SCRIPT_DIR/$NGINX_RPC_ALLOWLIST;
         deny all;
 
         proxy_pass http://localhost:$VARVAL_CHAIN_RPC;
@@ -588,7 +588,7 @@ server {
     
     location / {
         try_files \$uri \$uri/ =404;
-        include ~/$NGINX_WSS_ALLOWLIST;
+        include $SCRIPT_DIR/$NGINX_WSS_ALLOWLIST;
         deny all;
 
         proxy_pass http://localhost:$VARVAL_CHAIN_WSS;
@@ -644,10 +644,10 @@ EOF
     echo -e
     echo -e "Externally: Websocket ${BYELLOW}wss://$CNAME_RECORD2${NC} or RPC/API ${BYELLOW}https://$CNAME_RECORD1${NC}"
     echo -e
-    echo -e "Use file ${BYELLOW}~/$NGINX_WSS_ALLOWLIST${NC} to add/remove IP addresses that access your node using websockets."
+    echo -e "Use file ${BYELLOW}$SCRIPT_DIR/$NGINX_WSS_ALLOWLIST${NC} to add/remove IP addresses that access your node using websockets."
     echo -e "Once file is edited and saved, TEST it with ${BYELLOW}'sudo nginx -t'${NC} before running the command ${BYELLOW}'sudo systemctl reload nginx.service'${NC} to apply new settings."
     echo -e
-    echo -e "Ingore file ${BYELLOW}~/$NGINX_RPC_ALLOWLIST${NC}. It was generated only as a placeholder for future potential use."
+    echo -e "Ingore file ${BYELLOW}$SCRIPT_DIR/$NGINX_RPC_ALLOWLIST${NC}. It was generated only as a placeholder for future potential use."
     echo -e
     echo -e "Use command ${BYELLOW}xahaud server_info${NC} to get info direct from the xahaud server."
     echo -e

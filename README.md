@@ -67,25 +67,20 @@ Note: There is no "right" answer and all specifications are approximate. I haven
 
 ### Nginx related
 
-All the domain specific config is contained in the file `/etc/nginx/sites-available/xahau` but the allow list is now in the user's home folder `~/nginx_` for easier editing.
+All the domain specific config is contained in the file `/etc/nginx/sites-available/xahau` but the allowlists (yes there are two now) are in the user's home folder `~/nginx_rpc_allowlist.conf` and `nginx_wss_allowlist.conf` for easier editing and protecting form accidental deletion. Ignore the RPC one, it is a placeholder for now.
 
-Any changes to the `nginx_allowlist.conf` file MUST first be tested with `sudo nginx -t` and then reloaded with `sudo nginx -s reload`.
+Any changes to the `nginx_RPC/WSS_allowlist.conf` files MUST first be tested with `sudo nginx -t` and then reloaded with `sudo systemctl reload nginx.service`.
 
-Logs are held at `/var/log/nginx/`.
-
-Although this works best on a dedicated host with no other nginx/proxy instances, it can work behind another instance.
-You may need to adjust the setting in the main nginx.conf file to suit your environment so the allow list works correctly.
-
-For example, in nginx.conf you may need to adjust/add `set_real_ip_from 172.16.0.0/12;` for your proxy IP.
+Logs are generated at `/var/log/nginx/`.
 
 
 # Node IP Permissions
 
-The setup script adds 3 IP addresses by default to the nginx_allowlist.conf file: the detected SSH IP, the external nodes IP, and the local environment IP.
+The setup script adds 2 IP addresses by default to the nginx_RPC/WSS_allowlist.conf files: the detected SSH IP and the external nodes IP.
 
-In order to add/remove access to your node, you adjust the addresses within the `nginx_allowlist.conf` file.
+In order to add/remove access to your node, you adjust the addresses within the `nginx_wss_allowlist.conf` file. Again, ignore the RPC file.
 
-Edit the `nginx_allowlist.conf` file with your preferred editor e.g. `nano nginx_allowlist.conf`.
+Edit the `nginx_wss_allowlist.conf` file with your preferred editor e.g. `nano ~/nginx_wss_allowlist.conf`.
 
 Start every line with allow, a space, and then the IP, and end the line with a semicolon.
 
@@ -100,17 +95,9 @@ __REMOVE__ : Delete the line.
 
 THEN
 
-__TEST_AND_RELOAD__ : First `sudo nginx -t` and if successful, perform a reload with `sudo nginx -s reload`.
+__TEST_AND_RELOAD__ : First `sudo nginx -t` and if successful, perform a reload with `sudo systemctl reload nginx.service`.
 
 ---
-
-# Testing your Xahaud server
-
-This can be done simply by entering the Domain or IP into a browser.
-
-This will give you one of two results:
-  - A notice that your IP is blocked, telling you which IP to add to your nginx_allowlist.conf file.
-  - Some basic details of your node pulled by RPC.
 
 #### XAHAUD
 
