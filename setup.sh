@@ -304,10 +304,6 @@ FUNC_CERTBOT(){
     CNAME_RECORD1="${DOMAINS_ARRAY[1]}"
     CNAME_RECORD2="${DOMAINS_ARRAY[2]}" 
 
-    # Start Nginx and enable it to start at boot
-    #sudo systemctl start nginx
-    #sudo systemctl enable nginx
-
     # Request and install a Let's Encrypt SSL/TLS certificate for Nginx
     sudo certbot --nginx  -m "$CERT_EMAIL" -n --agree-tos -d "$USER_DNS_RECORDS"
 
@@ -406,223 +402,6 @@ FUNC_ALLOWLIST_CHECK(){
 }
 
 
-FUNC_INSTALL_LANDINGPAGE(){
-    echo -e
-    echo -e "${GREEN}#########################################################################${NC}"
-    echo -e
-    echo -e "${GREEN}## ${YELLOW}Setup: Installing Landing page... ${NC}"
-    echo -e
-        
-    sudo mkdir -p /home/www
-    echo -e "Created /home/www directory for webfiles, and re-installing webpage."
-
-        TMP_FILE03=$(mktemp)
-        cat <<EOF > $TMP_FILE03
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xahau Node</title>
-</head>
-<style>
-    body {
-        background-color: #121212;
-        color: #ffffff;
-        font-family: Arial, sans-serif;
-        padding: 20px;
-        margin: 2;
-        text-align: center;
-    }
-
-    h1 {
-        font-size: 28px;
-        margin-bottom: 20px;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-    }
-
-    .container {
-        max-width: 300px;
-        margin: 0 auto;
-        margin-bottom: 20px;
-        padding: 20px;
-        border: 2px solid #ffffff;
-        border-radius: 10px;
-        text-align: left; /* Align content to the left */
-    }
-
-    #serverInfo {
-        background-color: #1a1a1a;
-        padding: 20px;
-        border-radius: 10px;
-        margin-top: 10px;
-        margin: 0 auto;
-        max-width: 600px;
-        color: #ffffff;
-        font-family: Arial, sans-serif;
-        font-size: 14px;
-        white-space: pre-wrap;
-        overflow: auto; /* Add scrollbars if needed */
-        text-align: left; /* Align content to the left */
-    }
-</style>
-<body>
-    <h1>Xahau Node Landing Page</h1>
-
-    <div class="container">
-        <h1>Server Info</h1>
-        <p>Status: <span id="status"></span></p>
-        <p>Build Version: <span id="buildVersion"></span></p>
-        <p>Current Ledger: <span id="currentLedger"></span></p>
-        <p>Complete Ledgers: <span id="completeLedgers"></span></p>
-        <p>Last Refresh: <span id="time"></span></p>
-    </div>
-
-    <pre id="serverInfo"></pre>
-
-    <script>
-        const dataToSend = {"method":"server_info"};
-        fetch('https://$A_RECORD', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(dataToSend)
-        })
-            .then(response => {
-                return response.json();
-            })
-            .then(serverInfo => {
-                const formattedJson = JSON.stringify(serverInfo, null, 2);
-                document.getElementById('serverInfo').textContent = formattedJson;
-                document.getElementById('status').textContent = serverInfo.result.status;
-                document.getElementById('buildVersion').textContent = serverInfo.result.info.build_version;
-                document.getElementById('currentLedger').textContent = serverInfo.result.info.validated_ledger.seq;
-                document.getElementById('completeLedgers').textContent = serverInfo.result.info.complete_ledgers;
-                document.getElementById('time').textContent = serverInfo.result.info.time;
-            })
-            .catch(error => {
-                console.error('Error fetching server info:', error);
-                document.getElementById('status').textContent = "failed, server could be down";
-                document.getElementById('status').style.color = "red";
-            });
-    </script>
-</body>
-</html>
-EOF
-sudo sh -c "cat $TMP_FILE03 > /home/www/index.html"
-
-        sudo mkdir -p /home/www/error
-        echo "created /home/www/error directory for blocked page, re-installing webpage"
-        TMP_FILE04=$(mktemp)
-        cat <<EOF > $TMP_FILE04
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xahau Node</title>
-</head>
-<style>
-body {
-    background-color: #121212;
-    color: #ffffff;
-    font-family: Arial, sans-serif;
-    padding: 20px;
-    margin: 2;
-    text-align: center;
-}
-
-h1 {
-    font-size: 28px;
-    margin-bottom: 20px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-.container {
-    max-width: 300px;
-    margin: 0 auto;
-    margin-bottom: 20px;
-    padding: 20px;
-    border: 2px solid #ffffff;
-    border-radius: 10px;
-    text-align: left; /* Align content to the left */
-}
-
-#serverInfo {
-    background-color: #1a1a1a;
-    padding: 20px;
-    border-radius: 10px;
-    margin-top: 10px;
-    margin: 0 auto;
-    max-width: 600px;
-    color: #ffffff;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    white-space: pre-wrap;
-    overflow: auto; /* Add scrollbars if needed */
-    text-align: left; /* Align content to the left */
-}
-</style>
-
-<body>
-    <h1>Xahau Node Landing Page</h1>
-
-    <div class="container">
-        <h1>Server Info</h1>
-        <p><span style="color: red;">THIS SERVER IS BLOCKING YOUR IP</span></p>
-        <p>YourIP: <span id="realip"></p>
-        <p>X-Real-IP: <span id="xrealip"></p>
-        <p>-</p>
-
-        <p>Status: </p>
-        <p>Build Version: </p>
-        <p>Current Ledger: </p>
-        <p>Complete Ledgers: </span></p>
-        <p>Last Refresh: </span></p>
-    </div>
-
-    <pre id="serverInfo"></pre>
-
-    <script>
-        const dataToSend = {"method":"server_info"};
-        fetch('https://$A_RECORD', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(dataToSend)
-        })
-        .then(response => {
-            const xRealIp = response.headers.get('X-Real-IP');
-            document.getElementById('xrealip').textContent = xRealIp;
-        })
-        .catch(error => {
-            console.error('Error fetching X-Real-IP:', error);
-            document.getElementById('xrealip').textContent = "unknown";
-        });
-
-        fetch('https://ipinfo.io/ip')
-        .then(response => response.text())
-        .then(ipinfo => {
-            document.getElementById('realip').textContent = ipinfo;
-        })
-        .catch(error => {
-            console.error('Error fetching client IP:', error);
-            document.getElementById('realip').textContent = "unknown";
-        });
-    </script>
-
-</body>
-</html>
-EOF
-    sudo sh -c "cat $TMP_FILE04 > /home/www/error/custom_403.html"
-    
-    echo
-    sleep 2s
-}
-
-
 FUNC_NODE_DEPLOY(){
     
     echo -e "${GREEN}#########################################################################${NC}"
@@ -702,9 +481,6 @@ FUNC_NODE_DEPLOY(){
 
     FUNC_CERTBOT;
     #FUNC_EXIT;
-
-    #setup and install the landing page,
-    FUNC_INSTALL_LANDINGPAGE;
 
     # Create a new Nginx configuration file with the user-provided variables....
     echo
@@ -871,7 +647,7 @@ EOF
     echo -e "${GREEN}#########################################################################${NC}"
     echo -e "Your Xahau Node should now be up and running."
     echo -e
-    echo -e "Externally: Websocket ${BYELLOW}wss://$CNAME2${NC} or RPC/API ${BYELLOW}https://$CNAME1${NC}"
+    echo -e "Externally: Websocket ${BYELLOW}wss://$CNAME_RECORD2${NC} or RPC/API ${BYELLOW}https://$CNAME_RECORD1${NC}"
     echo -e
     echo -e "Use file ${BYELLOW}$SCRIPT_DIR/$NGINX_WSS_ALLOWLIST${NC} to add/remove IP addresses that access your node using websockets."
     echo -e "Once file is edited and saved, TEST it with ${BYELLOW}'sudo nginx -t'${NC} before running the command ${BYELLOW}'sudo systemctl reload nginx.service'${NC} to apply new settings."
