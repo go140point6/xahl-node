@@ -41,6 +41,12 @@ Review xahl_node.vars and adjust default settings and user-specific variables, t
 
         ./setup.sh
 
+## Uninstall
+
+Not recommended for production use, you would be better off reinstalling Ubuntu cleanly but I used this in my testing of the script so I am making it available:
+
+        ./_reset_xahl_node.sh
+
 ### Vars file _(xahl_node.vars)_
 
 The vars file allows you to manually update variables which helps to avoid interactive prompts during the install.
