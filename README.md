@@ -3,27 +3,28 @@ Xahau submission node installation with nginx &amp; lets encrypt TLS certificate
 
 ---
 
-This script will take the standard Xahau node install (non-docker version) and supplement it with the necessary configuration to provide a TLS secured RPC/WSS endpoint using Nginx.
+This script will take the standard Xahau node install (non-docker version) and supplement it with the necessary configuration to provide TLS secured RPC/WSS endpoints using Nginx. It also configures xahaud to auto-prune by default.
 
-This version is a major rewrite which uses a single host (A) record in place of host and two CNAME records, among other enhancements.
+NOTE! This version is back to the "old method" of using a single host (A) record and two CNAME records. You MUST edit the xahl_nodes.vars file with YOUR values AFTER you create all THREE records in DNS.
+
+[@gadget78](https://github.com/gadget78/xahl-node) is currently hosting the NEW method which uses a single host record and has some advanced status page features. I have decided to stick with my old method as an alternative option. The only major improvement with my script now is that it automatically adds the XAHL self-pruning feature so you don't unexpectedly run out of space. It also splits the allowlist for RPC and WSS in files in the home directory. As time permits, I may go back and introduce gadget's status page and toml features.
 
 ---
 
 ## Current functionality
- - Install options for Mainnet (Testnet if demand warrants)
- - Supports the use of custom variables using the `xahl_node.vars` file
+ - Install options for Mainnet (Testnet if demand warrants).
+ - Supports the use of custom variables using the `xahl_node.vars` file.
  - Detects UFW firewall & applies necessary firewall updates.
  - Installs & configures Nginx 
-   - Sets up nginx so that it splits the incoming traffic to your supplied domain to the correct 3 backends. 1.static website, 2.the websocket(wss) and 3.any rpc traffic.
-   - TL;DR; you only need ONE domain pointing to this server.
-   - Automatically detects the IPs of your ssh session, the node itself, and its local environment, and adding them to the nginx_allowlist.conf file
- - Applies NIST security best practices
+   - Currently only supports multi-domain deployment with one A record & two CNAME records (requires operator has control over the domain).
+   - Automatically detects the IPs of your ssh session and the node itself, adding both to the RPC and WSS allowlists in your home folder.
+ - Applies NIST security best practices.
  
 ---
 
 ## Update
 
-NOT FULLY TESTED. If you are updating from an older version, where the allow list was saved in `/etc/nginx/sites-available/xahau` then save your allow entries before installing.
+If you are updating from an older version, where the allow list was saved in `/etc/nginx/sites-available/xahau` then save your allow entries before installing.
 
         sudo cp /etc/nginx/sites-available/xahau ~/ # Copy to your home folder
         cat ~/xahau # view the file
@@ -36,7 +37,7 @@ NOT FULLY TESTED. If you are updating from an older version, where the allow lis
         git clone https://github.com/go140point6/xahl-node
         cd xahl-node
 
-Review xahl_node.vars and adjust default settings and user-specific variables, then run the script: 
+Review xahl_node.vars and adjust default settings and user-specific variables, then run the script (you will be prompted for sudo password): 
 
         ./setup.sh
 
@@ -44,9 +45,8 @@ Review xahl_node.vars and adjust default settings and user-specific variables, t
 
 The vars file allows you to manually update variables which helps to avoid interactive prompts during the install.
 
-- `USER_DOMAIN` - your server domain. Unlike previous versions of this script, this is a single host (A) record (i.e. xahl.EXAMPLE.com).
+- `USER_DOMAIN` - note the order in which the A & CNAME records must be entered --> THREE RECORDS, host and two CNAME!
 - `CERT_EMAIL` - email address for certificate renewals.
-- `TOML_EMIAL` - email address for the PUBLIC .toml file. Can be the same as CERT_EMAIL if desired, or something different.
 - `XAHAU_NODE_SIZE` - allows you to establish a "size" of the node.
 
 The file also controls the default packages that are installed on the node.
@@ -55,15 +55,13 @@ To adjust the default settings via this file, edit it using your preferred edito
 
         nano ~/xahl-node/xahl_node.vars
 
-there are 3 size options tiny/medium/huge, `tiny` is the default.
-- `tiny` -  less than 8G-RAM 50GB-HDD
-- `medium` - 16G-RAM 250GB-HDD
-- `huge` - 32G+RAM nolimit-HDD
+there are 4 size options tiny/small/medium/huge, `tiny` is the default.
+- `tiny` -  less than 8G RAM 50G+ storage
+- `small` - 8G+ RAM 100G+ storage
+- `medium` - 16G+ RAM 250G+ storage
+- `huge` - 32G+ RAM 500G+ storage
 
-There are other options available in the .vars file, i.e.:
- 
-    INSTALL_CERTBOT_SSL="false" will keep certbot from being installed and configured (script will set up xahaud for non-SSL use).
-    INSTALL_LANDINGPAGE="false" will prevent creation/updating of the landing page (i.e. if you have a custom one).
+Note: There is no "right" answer and all specifications are approximate. I haven't done extensive testing to see if there is a real difference between them for what I'm using my xahaud for (as an evernode submission node). See https://xrpl.org/docs/infrastructure/installation/capacity-planning/ for more information on this topic.
 
 ---
 
