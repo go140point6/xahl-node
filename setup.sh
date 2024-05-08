@@ -531,6 +531,8 @@ FUNC_NODE_DEPLOY(){
     FUNC_CERTBOT;
     #FUNC_EXIT;
 
+    FUNC_INSTALL_TOML;
+
     # Create a new Nginx configuration file with the user-provided variables....
     echo
     echo -e "${GREEN}#########################################################################${NC}"
