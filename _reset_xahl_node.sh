@@ -116,8 +116,21 @@ sudo apt --purge remove certbot python3-certbot-nginx python3-acme python3-certb
 sudo rm -rfv /var/log/letsencrypt
 
 # Clean up files in home directory
-sudo rm -rfv $SCRIPT_DIR/$NGINX_RPC_ALLOWLIST
-sudo rm -rfv $SCRIPT_DIR/$NGINX_WSS_ALLOWLIST
+echo -e $NGINX_RPC_ALLOWLIST
+if [ -z $NGINX_RPC_ALLOWLIST]; then
+    echo -e "NGINX_RPC_ALLOWLIST is not defined for some reason. Exiting before I nuke the home folder."
+    exit 1
+else 
+    sudo rm -rfv ~/$NGINX_RPC_ALLOWLIST
+fi
+
+echo -e $NGINX_WSS_ALLOWLIST
+if [ -z $NGINX_WSS_ALLOWLIST]; then
+    echo -e "NGINX_WSS_ALLOWLIST is not defined for some reason. Exiting before I nuke the home folder."
+    exit 1
+else 
+    sudo rm -rfv ~/$NGINX_WSS_ALLOWLIST
+fi
 
 echo
 echo
