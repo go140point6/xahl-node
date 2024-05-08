@@ -79,11 +79,14 @@ FUNC_CHECK_VARS(){
     if [ "$CERT_EMAIL" = "yourRealEmailAddress@EXAMPLE.com" ]; then
         ERROR2="CERT_EMAIL appears to be using sample data in xahl_node.vars."
     fi
+    if [ "$TOML_EMAIL" = "yourPublicEmailAddress@EXAMPLE.com" ]; then
+        ERROR3="TOML_EMAIL appears to be using sample data in xahl_node.vars."
+    fi
     if [ "$XAHAU_NODE_SIZE" != "tiny" ] && [ "$XAHAU_NODE_SIZE" != "small" ] && [ "$XAHAU_NODE_SIZE" != "medium" ] && [ "$XAHAU_NODE_SIZE" != "huge" ]; then
-        ERROR3="XAHAU_NODE_SIZE appears to be using some value that is not valid in xahl_node.vars."
+        ERROR4="XAHAU_NODE_SIZE appears to be using some value that is not valid in xahl_node.vars."
     fi
     if [ "$VARVAL_CHAIN_NAME" != 'mainnet' ] && [ "$VARVAL_CHAIN_NAME" != 'testnet' ]; then
-        ERROR4="VARVAL_CHAIN_NAME appears to be set incorrectly, valid options are mainnet or testnet ONLY."
+        ERROR5="VARVAL_CHAIN_NAME appears to be set incorrectly, valid options are mainnet or testnet ONLY."
     fi
 
     if [ -n "$ERROR1" ]; then
@@ -99,10 +102,14 @@ FUNC_CHECK_VARS(){
         echo -e
     fi
     if [ -n "$ERROR4" ]; then
+        echo -e "${YELLOW}$ERROR3${NC}"
+        echo -e
+    fi
+    if [ -n "$ERROR5" ]; then
         echo -e "${YELLOW}$ERROR4${NC}"
         echo -e
     fi
-    if [ -n "$ERROR1" ] || [ -n "$ERROR2" ] || [ -n "$ERROR3" ] || [ -n "$ERROR4" ]; then
+    if [ -n "$ERROR1" ] || [ -n "$ERROR2" ] || [ -n "$ERROR3" ] || [ -n "$ERROR4" ] || [ -n "$ERROR5" ]; then
         echo -e ${RED}You must fix the errors above before running this script.${NC}
         FUNC_EXIT_ERROR
     else
@@ -347,12 +354,54 @@ EOF
 }
 
 
-FUNC_ALLOWLIST_CHECK(){
-    echo
+FUNC_INSTALL_TOML() {
+    echo -e
     echo -e "${GREEN}#########################################################################${NC}"
-    echo
+    echo -e
+    echo -e "${GREEN}## ${YELLOW}Setup: toml.file...${NC}"
+    echo -e
+
+    sudo mkdir -p /home/www/.well-known
+    TMP_FILE03=$(mktemp)
+    cat <<EOF > $TMP_FILE03
+
+[[METADATA]]
+created = $FDATE
+modified = $FDATE
+
+[[PRINCIPALS]]
+name = "evernode"
+email = "$TOML_EMAIL"
+discord = ""
+
+[[ORGANIZATION]]
+website = "https://$A_RECORD"
+
+[[SERVERS]]
+domain = "https://$A_RECORD"
+install = "Created by go140point6 & gadget78 (fork of original work by inv4fee2020 for XDC Network.)"
+
+[[STATUS]]
+NETWORK = "$VARVAL_CHAIN_NAME"
+NODESIZE = "$XAHAU_NODE_SIZE"
+
+[[AMENDMENTS]]
+
+# End of file
+EOF
+
+    sudo sh -c "cat $TMP_FILE03 > /home/www/.well-known/xahau.toml"
+    echo -e
+    sleep 2s
+}
+
+
+FUNC_ALLOWLIST_CHECK(){
+    echo -e
+    echo -e "${GREEN}#########################################################################${NC}"
+    echo -e
     echo -e "${GREEN}## ${YELLOW}Setup: checking/setting up IPs, ALLOWLIST file...${NC}"
-    echo
+    echo -e
 
     # Get some source IPs
     #current SSH session
