@@ -111,9 +111,9 @@ Note: look for `"server_state" : "full",` and your xahaud should be working as e
 
 To test the Websocket function, use the wscat command (installed by default as part of the script)
 
-Copy the following command replacing `xahl.mydomain.com` with your DNS host record from `USER_DOMAIN` in the vars file.
+Copy the following command replacing `wss.EXAMPLE.com` with your DNS CNAME record for YOUR websocket.
 
-        wscat -c wss://xahl.mydomain.com
+        wscat -c wss://wss.EXAMPLE.com
 
 A successful result is shown below with the second command verifying:
 
@@ -126,9 +126,9 @@ and enter
 
 #### RPC / API is easier to check
 
-A simple command from the command line
+A simple command from the command line (as long as you update the URL below to YOUR rpc URL!)
 
-    curl -X POST -H "Content-Type: application/json" -d '{"method":"server_info"}' http://127.0.0.1
+    curl -X POST -H "Content-Type: application/json" -d '{"method":"server_info"}' https://rpc.EXAMPLE.com
 
 ---
 

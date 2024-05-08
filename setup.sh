@@ -528,12 +528,6 @@ server {
     add_header Host \$host;
     add_header X-Real-IP \$remote_addr;
 
-    error_page 403 /custom_403.html;
-    location /custom_403.html {
-        root /home/www/error;
-        internal;
-    }
-    
     location / {
         try_files \$uri \$uri/ =404;
         include $SCRIPT_DIR/$NGINX_RPC_ALLOWLIST;
@@ -584,7 +578,6 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
     add_header Host \$host;
     add_header X-Real-IP \$remote_addr;
-    }
     
     location / {
         try_files \$uri \$uri/ =404;
